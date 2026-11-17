@@ -1,0 +1,47 @@
+{
+  "appId": "com.tablescapestudio.app",
+  "appName": "Tablescape",
+  "webDir": "dist-www",
+  "backgroundColor": "#110e13",
+  "appendUserAgent": "TablescapeApp/1",
+  "loggingBehavior": "none",
+  "server": {
+    "url": "https://app.tablescape.vip/",
+    "errorPath": "offline.html",
+    "allowNavigation": [
+      "app.tablescape.vip"
+    ],
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "ios": {
+    "backgroundColor": "#110e13",
+    "contentInset": "never",
+    "scrollEnabled": true,
+    "allowsLinkPreview": false,
+    "limitsNavigationsToAppBoundDomains": true,
+    "preferredContentMode": "mobile"
+  },
+  "android": {
+    "backgroundColor": "#110e13",
+    "allowMixedContent": false,
+    "captureInput": false,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 900,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 250,
+      "backgroundColor": "#110e13",
+      "showSpinner": false,
+      "androidScaleType": "CENTER_CROP",
+      "splashFullScreen": false,
+      "splashImmersive": false
+    },
+    "SystemBars": {
+      "insetsHandling": "native",
+      "style": "DARK"
+    }
+  }
+}

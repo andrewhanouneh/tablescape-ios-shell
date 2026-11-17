@@ -1,0 +1,169 @@
+# iOS build of the Tablescape store app: an unsigned simulator check, or a signed App Store build uploaded to TestFlight.
+# This repo is public so GitHub's macOS runners are free. It holds only the store shell; the app itself is the web app at
+# https://app.tablescape.vip. The shell is copied here from the private repo by scripts/sync-ios-shell.sh (never edit it here).
+#
+#   Actions > iOS > Run workflow: an unsigned simulator build that opens the app in the iPhone and iPad simulators.
+#   Tick "upload": a signed App Store build, uploaded to TestFlight.
+#
+# Hardening: runs only when started by hand (no pull_request triggers, so forks can't run it), read-only token, actions pinned
+# to commit SHAs, and the App Store Connect secrets reach only the signing step.
+#   secret   APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_P8   (set by the maintainer, never typed)
+#   variable APPLE_TEAM_ID   the 10-character Team ID; not secret
+
+name: iOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Sign and upload to TestFlight
+        type: boolean
+        default: false
+      check_only:
+        description: With upload, sign and check the app but don't send it to App Store Connect
+        type: boolean
+        default: false
+      app_url:
+        description: Address the app opens (leave blank for the production address in store-app.json)
+        required: false
+        default: ''
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ inputs.upload && 'Build and upload to TestFlight' || 'Simulator build' }}
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install
+        run: npm ci --no-audit --no-fund --ignore-scripts
+
+      - name: Configure the store build
+        env:
+          APP_CHANNEL: store
+          APP_URL: ${{ inputs.app_url }}
+        run: |
+          node scripts/configure.mjs
+          npx cap sync ios
+          node scripts/patch-native.mjs ios
+
+      - name: Xcode
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Simulator build (unsigned)
+        if: ${{ !inputs.upload }}
+        run: |
+          set -o pipefail
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/dd" CODE_SIGNING_ALLOWED=NO build | tail -n 40
+
+      - name: Open it in the iPhone and iPad simulators
+        if: ${{ !inputs.upload }}
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/dd/Build/Products/Release-iphonesimulator/App.app"
+          BID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")
+          mkdir -p "$RUNNER_TEMP/shots"
+          for kind in iPhone iPad; do
+            UDID=$(xcrun simctl list devices available -j | node -e "
+              const d=JSON.parse(require('fs').readFileSync(0,'utf8')).devices;
+              const all=Object.entries(d).filter(([r])=>/iOS/.test(r)).flatMap(([,l])=>l);
+              const m=all.filter(x=>x.name.startsWith('$kind')).pop(); if(!m) process.exit(1); console.log(m.udid)")
+            xcrun simctl boot "$UDID"
+            xcrun simctl bootstatus "$UDID" -b >/dev/null
+            xcrun simctl install "$UDID" "$APP"
+            xcrun simctl launch "$UDID" "$BID"
+            sleep 25
+            xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/$kind.png"
+            running=$(xcrun simctl spawn "$UDID" launchctl list)
+            case "$running" in *"$BID"*) echo "$kind: running" ;; *) echo "::error::the app is not running on the $kind simulator"; exit 1 ;; esac
+            xcrun simctl shutdown "$UDID"
+          done
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: ${{ !inputs.upload && always() }}
+        with:
+          name: simulator-screenshots
+          path: ${{ runner.temp }}/shots
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Archive, sign and upload to TestFlight
+        if: ${{ inputs.upload }}
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
+          TEAM: ${{ vars.APPLE_TEAM_ID }}
+          CHECK_ONLY: ${{ inputs.check_only }}
+        run: |
+          set -euo pipefail
+          missing=""
+          [ -n "$KEY_ID" ] || missing="$missing APP_STORE_CONNECT_KEY_ID"
+          [ -n "$ISSUER" ] || missing="$missing APP_STORE_CONNECT_ISSUER_ID"
+          [ -n "$P8" ] || missing="$missing APP_STORE_CONNECT_KEY_P8"
+          [ -n "$TEAM" ] || missing="$missing APPLE_TEAM_ID(variable)"
+          if [ -n "$missing" ]; then echo "::error::Not set yet:$missing (see the top of .github/workflows/ios.yml)"; exit 1; fi
+          KEY="$RUNNER_TEMP/AuthKey_$KEY_ID.p8"
+          umask 077
+          printf '%s\n' "$P8" > "$KEY"
+          trap 'rm -f "$KEY"' EXIT
+          VERSION=$(node -p "require('./package.json').version")
+          BUILD="$(date -u +%y%m%d).${GITHUB_RUN_NUMBER}"   # CFBundleVersion: build date, then the run number (always higher)
+          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY" -authenticationKeyID "$KEY_ID" -authenticationKeyIssuerID "$ISSUER")
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic CODE_SIGNING_ALLOWED=NO MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD" \
+            "${AUTH[@]}" archive | tail -n 40
+          # the archive is unsigned, so its app carries no entitlements; give it Sign in with Apple and the passkey domains before the export re-signs it
+          codesign --force --sign - --timestamp=none --entitlements ios/App/App/App.entitlements "$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app"
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          # Sign in with Apple must be in the signed app (the native sheet needs it): export once locally and check first
+          sed 's#<string>upload</string>#<string>export</string>#' "$RUNNER_TEMP/ExportOptions.plist" > "$RUNNER_TEMP/ExportCheck.plist"
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" -exportOptionsPlist "$RUNNER_TEMP/ExportCheck.plist" \
+            -exportPath "$RUNNER_TEMP/check" "${AUTH[@]}" | tail -n 20
+          (cd "$RUNNER_TEMP/check" && unzip -q -o ./*.ipa -d ipa)
+          codesign -d --entitlements - --xml "$RUNNER_TEMP/check/ipa/Payload/App.app" 2>/dev/null > "$RUNNER_TEMP/ent.xml" || true
+          grep com.apple.developer.applesignin "$RUNNER_TEMP/ent.xml" >/dev/null \
+            || { echo "::error::the signed app has no Sign in with Apple entitlement; nothing was uploaded"; exit 1; }
+          # passkeys in the web view need the associated domains (webcredentials:tablescape.vip), which the profile carries only once
+          # the bundle ID has the Associated Domains capability at Apple (docs/passkeys-2fa.md)
+          for d in webcredentials:tablescape.vip webcredentials:app.tablescape.vip; do
+            grep -F "<string>$d</string>" "$RUNNER_TEMP/ent.xml" >/dev/null \
+              || { echo "::error::the signed app has no $d associated domain; nothing was uploaded"; exit 1; }
+          done
+          echo "Signed app has the Sign in with Apple entitlement and the passkey domains (webcredentials:tablescape.vip, app.tablescape.vip)." >> "$GITHUB_STEP_SUMMARY"
+          if [ "$CHECK_ONLY" = true ]; then echo "check_only: not uploaded" >> "$GITHUB_STEP_SUMMARY"; exit 0; fi
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" "${AUTH[@]}" | tail -n 40
+          echo "Uploaded version $VERSION build $BUILD to App Store Connect. It shows in TestFlight after Apple's processing (about 10 to 30 minutes)." >> "$GITHUB_STEP_SUMMARY"

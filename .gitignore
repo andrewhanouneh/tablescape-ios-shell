@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# keys and signing files never belong here
+.env
+.env.*
+*.p8
+*.p12
+*.pem
+*.keystore
+*.jks
+*.mobileprovision
+
+# written by scripts/configure.mjs for each build
+dist-www/
+www/app-config.js
+www/native.js
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
