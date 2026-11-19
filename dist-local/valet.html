@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
+<meta name="theme-color" content="#f6f3ee" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#110e13" media="(prefers-color-scheme: dark)">
+<title>Valet</title><link rel="icon" href="event-icon-32.png" sizes="32x32"><link rel="apple-touch-icon" href="event-icon-180.png">
+<!-- The guest's Bring my car page on its own (the QR on each valet stub opens /valet#valet-<event>.<tag>.<code>). A guest at the valet stand,
+     often on a weak signal, gets a few KB instead of the whole planner app: no 3D, no PDF tool, no supabase-js, just two database calls
+     (read_valet_car and request_valet_car, docs/valet.md) over fetch. The words and rules are the app's own guest page (vlGuestRender in
+     tablescape-studio.html); tests/valet.test.mjs checks the two say the same. web/build.mjs fills in the address and key below. -->
+<script>window.TS_SUPABASE = {"url":"https://api.tablescape.vip","key":"sb_publishable_f7X_BpBscyPrSviTMvZUEi_awXThv16"};</script>
+<style>
+:root{--bg:#f6f3ee;--surface:#fffdf9;--surface-2:#efe9e0;--ink:#231d20;--muted:#5e5559;--line:#ddd3c7;--accent:#8a6a2a;--on-accent:#fff;--ok:#1f6b45;--caution:#8a4b00;--warn:#a1261e;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+@media (prefers-color-scheme: dark){:root{--bg:#110e13;--surface:#1c171e;--surface-2:#262029;--ink:#f3eee8;--muted:#b9adb3;--line:#3a3138;--accent:#d8b46a;--on-accent:#1a1410;--ok:#5fcf95;--caution:#f0b35c;--warn:#ff8b80}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);min-height:100vh}[hidden]{display:none!important}
+.g{max-width:520px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 16px 28px;display:grid;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.eye{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ev{margin:2px 0 0;font-family:Georgia,serif;font-size:20px}
+button{font:inherit;cursor:pointer}.btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}.btn:disabled{opacity:.6}
+.card{display:grid;gap:12px;padding:20px 18px;border-radius:22px;background:var(--surface);border:1px solid var(--line);text-align:center}
+.card.st-curb{background:var(--ok);border-color:var(--ok);color:var(--bg)}.card.st-curb .tagn span,.card.st-curb .car,.card.st-curb .sub{color:var(--bg)}
+.tagn{display:grid;justify-items:center}.tagn span{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.tagn b{font-size:56px;line-height:1;font-weight:800}
+.car{margin:0;font-size:15px;color:var(--muted)}.sw{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:6px;vertical-align:-2px;border:1px solid rgba(128,128,128,.6)}
+h1{margin:0;font-family:Georgia,serif;font-weight:400;font-size:30px;line-height:1.15}.sub{margin:6px 0 0;font-size:16px}.est{margin:0;font-weight:700;font-size:16px}
+.keep{margin:0;font-size:14.5px;padding:8px 10px;border-radius:12px;background:var(--surface-2)}.acts{display:grid;gap:10px}
+.huge{min-height:68px;width:100%;font-size:20px;font-weight:800;border-radius:16px}.fee{margin:0;text-align:center;font-weight:600}.foot{margin:0;text-align:center;font-size:13.5px;color:var(--muted)}.net{color:var(--caution)}
+.wait{text-align:center;padding:48px 0;color:var(--muted)}.miss{text-align:left}.nw{white-space:nowrap}
+</style></head>
+<body><main class="g" id="vl"><p class="wait" id="vl-wait">Finding your car… / Buscando su carro…</p></main>
+<script>
+(function(){
+  var C = window.TS_SUPABASE || {}, m = /^#valet-([A-Za-z0-9_-]+)\.(\d{1,5})\.([0-9a-f]{20})$/.exec(location.hash || ''), root = document.getElementById('vl');
+  var G = {ev:m ? m[1] : '', tag:m ? +m[2] : 0, code:m ? m[3] : '', d:null, err:'', busy:false, timer:0, last:'', base:'', acts:'', live:'', ac:null, lock:null, n:0, reqDone:0, readDone:0, noteAt:0};
+  var COLORS = {white:['White', 'Blanco', '#f4f4f1'], black:['Black', 'Negro', '#1f1f22'], silver:['Silver', 'Plateado', '#c3c6cb'], gray:['Gray', 'Gris', '#7b7f86'], blue:['Blue', 'Azul', '#2f5ea8'], red:['Red', 'Rojo', '#b3261e'],
+    green:['Green', 'Verde', '#2e6a46'], brown:['Brown or beige', 'Café o beige', '#a3815d'], gold:['Gold or yellow', 'Dorado o amarillo', '#d2a42b'], other:['Other', 'Otro', '#8e7aa8']};
+  function lang(){ var p = ''; try { p = localStorage.getItem('tablescape-lang') || localStorage.getItem('ts-valet-lang') || ''; } catch(e){} if(p === 'es' || p === 'en') return p; var l = (navigator.languages || []).filter(function(x){ return /^(en|es)/i.test(x); })[0] || navigator.language || ''; return /^es/i.test(l) ? 'es' : 'en'; }   /* the app's one language setting (tablescape-lang), then the phone's */
+  function L(en, es){ return lang() === 'es' ? es : en; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]; }); }
+  /* a model like CX-5 or F-150 stays on one line instead of breaking after its hyphen (the app's vlKeep); display only */
+  function whole(h){ return String(h).replace(/[^\s<>]*[^\s<>-]-[^\s<>]+/g, function(m){ return '<span class="nw">' + m + '</span>'; }); }
+  function colorName(k){ return k && COLORS[k] ? COLORS[k][lang() === 'es' ? 1 : 0] : ''; }
+  function time(iso){ var d = iso ? new Date(iso) : null; return d && !isNaN(d) ? d.toLocaleTimeString(lang() === 'es' ? 'es-US' : 'en-US', {hour:'numeric', minute:'2-digit'}) : ''; }
+  function timeDot(iso){ var t = time(iso); return /\.$/.test(t) ? t : t + '.'; }
+  function money(n){ return '$' + (Math.round(n * 100) % 100 ? (+n).toFixed(2) : String(Math.round(n))); }
+  function title(ev, ready){ document.title = (ready ? '● ' : '') + (ev ? 'Valet · ' + ev : 'Valet'); }
+  /* the database, through its REST endpoint (what the Supabase library does, without its 100 KB): the publishable key, no session */
+  function rpc(fn, args){ var ctl = typeof AbortController === 'function' ? new AbortController() : null, t = setTimeout(function(){ if(ctl) ctl.abort(); }, 15000);
+    return fetch(String(C.url || '').replace(/\/$/, '') + '/rest/v1/rpc/' + fn, {method:'POST', headers:{'apikey':C.key, 'Authorization':'Bearer ' + C.key, 'Content-Type':'application/json', 'Accept':'application/json'}, body:JSON.stringify(args), signal:ctl ? ctl.signal : undefined})
+      .then(function(r){ clearTimeout(t); return r.text().then(function(s){ var j = null, ok = true; try { j = JSON.parse(s); } catch(x){ ok = false; }
+          if(!r.ok){ var e = new Error((ok && j && (j.message || j.error)) || ('HTTP ' + r.status)); e.server = true; e.status = r.status; throw e; }
+          if(!ok){ var b = new Error('unreadable answer'); b.server = true; throw b; } return j; }); },
+        function(e){ clearTimeout(t); var x = new Error('network'); x.net = true; throw x; }); }
+  function read(req){ return req ? rpc('request_valet_car', {ev:G.ev, tag:G.tag, code:G.code, cancel:req === 'cancel'}) : rpc('read_valet_car', {ev:G.ev, tag:G.tag, code:G.code}); }
+  function errText(e){ var s = String((e && e.message) || '');
+    if(e && e.net) return L('No signal. Try again, or go to the valet stand.', 'Sin señal. Intente de nuevo, o vaya al puesto de valet.');
+    if(/too many requests/.test(s)) return L('Too many requests from this ticket. Please see the valet stand.', 'Demasiados pedidos con este boleto. Por favor vaya al puesto de valet.');
+    if(/not checked in yet/.test(s)) return L('Your car isn’t checked in yet. Try again in a minute.', 'Su carro todavía no está registrado. Intente de nuevo en un minuto.');
+    if(/page not found/.test(s)) return L('This valet link isn’t working. It may be old, or valet ended for this event.', 'Este enlace de valet no funciona. Puede ser viejo, o el valet ya terminó para este evento.');
+    return L('That didn’t go through. Try again.', 'Eso no se completó. Intente de nuevo.'); }
+  function say(msg){ var n = document.getElementById('vl-note'); G.noteAt = msg ? Date.now() : 0; if(n){ n.textContent = msg; n.hidden = !msg; } }
+  /* the screen stays awake while the car is on its way; if the phone lets go of it on its own (battery saver) while the page is showing, it
+     is asked for again */
+  function wanted(){ return !document.hidden && !!G.d && (G.d.status === 'requested' || G.d.status === 'getting'); }
+  function wake(){ var W = navigator.wakeLock, want = wanted(); if(!W || typeof W.request !== 'function') return;
+    if(want && !G.lock){ G.lock = 'asking'; W.request('screen').then(function(l){ G.lock = l;
+        if(l && typeof l.addEventListener === 'function') l.addEventListener('release', function(){ if(G.lock !== l) return; G.lock = null; setTimeout(wake, 1000); });
+        if(!wanted()) wake(); }, function(){ G.lock = null; }); }
+    else if(!want && G.lock && G.lock !== 'asking'){ var l = G.lock; G.lock = null; try { l.release(); } catch(e){} } }
+  /* "we'll buzz you" only where the phone can vibrate (an iPhone can't, and it mutes sound on silent): elsewhere, just that the page changes */
+  function keepLine(){ return 'vibrate' in navigator ? L('Keep this page open and we’ll buzz you when your car is at the front.', 'Mantenga esta página abierta y le avisaremos con una vibración cuando su carro esté en la entrada.')
+    : L('Keep this page open. It will change here when your car is at the front.', 'Mantenga esta página abierta. Aquí verá cuando su carro esté en la entrada.'); }
+  function alertCurb(){ try { if(navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 600]); } catch(e){}
+    try { var A = G.ac; if(A){ if(A.state === 'suspended') A.resume(); var t = A.currentTime + .02; [[660, .14], [880, .14], [990, .3]].forEach(function(x){ var o = A.createOscillator(), g = A.createGain(); o.frequency.value = x[0]; g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.25, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + x[1]); o.connect(g); g.connect(A.destination); o.start(t); o.stop(t + x[1] + .02); t += x[1] + .05; }); } } catch(e){} }
+  function langBtn(){ var es = lang() === 'es'; return '<button type="button" class="btn" data-lang="1" lang="' + (es ? 'en' : 'es') + '">' + (es ? 'English' : 'Español') + '</button>'; }
+  /* built once per screen; a check changes only the words, so the focus and the live region stay */
+  function render(){ var d = G.d, es = lang() === 'es'; document.documentElement.lang = es ? 'es' : 'en';
+    if(!d){ G.base = ''; root.innerHTML = '<header class="top"><span class="eye">Valet</span>' + langBtn() + '</header><div class="card miss"><h1>' + esc(G.err === 'net' ? L('Couldn’t connect', 'No se pudo conectar') : L('We couldn’t find this valet ticket', 'No encontramos este boleto de valet')) + '</h1><p>'
+        + esc(G.err === 'net' ? L('Check your signal and try again.', 'Revise su señal e intente de nuevo.') : L('The link may be old, or valet has ended for this event. Please see the valet stand with your ticket.', 'El enlace puede ser viejo, o el valet ya terminó para este evento. Por favor vaya al puesto de valet con su boleto.')) + '</p>'
+        + (G.err === 'net' ? '<button type="button" class="btn primary huge" data-retry="1">' + esc(L('Try again', 'Intentar de nuevo')) + '</button>' : '') + '</div>'; G.last = ''; title('', false); wake(); return; }
+    var s = d.status, car = d.car, w = d.wait, plate = car && car.plateEnd ? L('plate ending in ' + car.plateEnd, 'placa que termina en ' + car.plateEnd) : '';
+    var carLine = car ? (es ? [car.make, colorName(car.color).toLowerCase()] : [colorName(car.color), car.make]).filter(Boolean).join(' ') : '';
+    var map = {none:[L('We’re parking your car', 'Estamos estacionando su carro'), L('Check back in a minute. Keep your ticket.', 'Vuelva a ver en un minuto. Guarde su boleto.')],
+      parked:[L('Your car is parked', 'Su carro está estacionado'), L('When you’re ready to leave, tap the button. We’ll bring it to the front.', 'Cuando esté listo para irse, toque el botón. Lo traeremos a la entrada.')],
+      requested:[L('We got your request', 'Recibimos su pedido'), L('Asked at ' + timeDot(d.requestedAt) + ' An attendant will bring your car.', 'Pedido a las ' + timeDot(d.requestedAt) + ' Un valet traerá su carro.')],
+      getting:[L('Your car is on the way', 'Su carro viene en camino'), L('An attendant is bringing it to the front now.', 'Un valet lo está trayendo a la entrada.')],
+      curb:[L('Your car is at the front', 'Su carro está en la entrada'), L('Please come to the valet stand with your ticket.', 'Por favor venga al puesto de valet con su boleto.')],
+      out:[L('Your car was handed over', 'Su carro fue entregado'), L('At ' + timeDot(d.outAt) + ' Thank you, and drive safely.', 'A las ' + timeDot(d.outAt) + ' Gracias, y maneje con cuidado.')]};
+    var tt = map[s] || map.none, est = '';
+    if(w && s === 'parked') est = L('Cars are taking about ' + w.minutes + ' minute' + (w.minutes === 1 ? '' : 's') + ' right now.', w.minutes === 1 ? 'Los carros están tardando un minuto ahora.' : 'Los carros están tardando unos ' + w.minutes + ' minutos ahora.');
+    else if(w && (s === 'requested' || s === 'getting')){ var left = w.minutes - Math.round((Date.now() - Date.parse(d.requestedAt)) / 6e4);
+      est = left <= 0 ? L('Taking a little longer than usual. Your car will be out soon.', 'Está tardando un poco más de lo normal. Su carro saldrá pronto.') : left === 1 ? L('About 1 more minute.', 'Un minuto más.') : L('About ' + left + ' more minutes.', 'Unos ' + left + ' minutos más.'); }
+    var keep = s === 'requested' || s === 'getting' ? keepLine() : '';
+    var fee = d.fee && d.fee.model === 'guest' && d.fee.amount > 0 ? L('Valet: ' + money(d.fee.amount) + ' per car', 'Valet: ' + money(d.fee.amount) + ' por carro') : L('Complimentary valet', 'Valet de cortesía');
+    var who = (d.event && d.event.venue) || (d.company && d.company.name) || '', evn = (d.event && d.event.name) || '', base = [lang(), d.tag, carLine, plate, fee, who, evn].join('|');
+    if(G.base !== base || !document.getElementById('vl-live')){ G.base = base; G.acts = ''; G.live = '';
+      root.innerHTML = '<header class="top"><div><span class="eye">Valet' + (who ? ' · ' + esc(who) : '') + '</span>' + (evn ? '<p class="ev">' + esc(evn) + '</p>' : '') + '</div>' + langBtn() + '</header>'
+        + '<section class="card" id="vl-card" aria-labelledby="vl-h"><div class="tagn"><span>' + esc(L('Ticket', 'Boleto')) + '</span><b>' + esc(d.tag) + '</b></div>'
+        + (carLine || plate ? '<p class="car">' + (car && car.color && COLORS[car.color] ? '<i class="sw" style="background:' + COLORS[car.color][2] + '" aria-hidden="true"></i>' : '') + whole(esc([carLine, plate].filter(Boolean).join(' · '))) + '</p>' : '')
+        + '<div id="vl-live" role="status" aria-live="polite" aria-atomic="true"><h1 id="vl-h"></h1><p class="sub" id="vl-sub"></p></div><p class="est" id="vl-est"></p><p class="keep" id="vl-keep"></p><div class="acts" id="vl-acts"></div></section>'
+        + '<p class="fee">' + esc(fee) + '</p><p class="foot">' + esc(L('Keep your ticket stub. If this page won’t load, show the stub at the valet stand.', 'Guarde su boleto. Si esta página no carga, muéstrelo en el puesto de valet.')) + '</p>'
+        + '<p class="foot net" id="vl-net" role="status"></p><p class="foot net" id="vl-note" role="alert" hidden></p>'; }
+    function put(id, t){ var el = document.getElementById(id); if(!el) return; if(el.textContent !== t) el.textContent = t; el.hidden = !t; }
+    document.getElementById('vl-card').className = 'card st-' + s;
+    var live = s + '|' + tt[0] + '|' + tt[1]; if(G.live !== live){ G.live = live; document.getElementById('vl-h').textContent = tt[0]; put('vl-sub', tt[1]); }
+    put('vl-est', est); put('vl-keep', keep); put('vl-net', G.err === 'net' ? L('No signal right now. This page will update on its own.', 'Sin señal ahora. Esta página se actualizará sola.') : '');
+    var acts = [s, G.busy, lang()].join('|'); if(G.acts !== acts){ G.acts = acts; var box = document.getElementById('vl-acts'), a = document.activeElement, key = a && box.contains(a) ? (a.hasAttribute('data-bring') ? '[data-bring]' : a.hasAttribute('data-cancel') ? '[data-cancel]' : '') : '';
+      box.innerHTML = (s === 'parked' ? '<button type="button" class="btn primary huge" data-bring="1"' + (G.busy ? ' disabled' : '') + '>' + esc(L('Bring my car', 'Traer mi carro')) + '</button>' : '')
+        + (s === 'requested' ? '<button type="button" class="btn" data-cancel="1"' + (G.busy ? ' disabled' : '') + '>' + esc(L('Not yet, cancel my request', 'Todavía no, cancelar mi pedido')) + '</button>' : '');
+      var back = key && box.querySelector(key); if(back) try { back.focus({preventScroll:true}); } catch(e){} }
+    title(evn, s === 'curb'); if(G.last !== s) wake();
+    if(s === 'curb' && G.last && G.last !== 'curb') alertCurb(); G.last = s; }
+  /* how soon to look again: often while the car is on its way; for 15 minutes after a handover (the desk can undo one); every 15 seconds or
+     more while the database isn't answering */
+  function outRecent(d){ var o = Date.parse(d.outAt), a = Date.parse(d.at); return !isNaN(o) && (isNaN(a) ? Date.now() : a) - o < 15 * 6e4; }
+  function next(){ clearTimeout(G.timer); var d = G.d, s = d && d.status, ms;
+    if(!d) ms = G.err === 'net' ? 15000 : 0; else if(s === 'out') ms = outRecent(d) ? 30000 : 0; else ms = s === 'requested' || s === 'getting' ? 5000 : s === 'curb' ? 10000 : s === 'none' ? 15000 : 20000;
+    if(ms && G.err === 'net') ms = Math.max(ms, 15000);
+    if(ms) G.timer = setTimeout(function(){ if(!document.hidden) tick(); }, ms); }
+  /* a check: only an answer the page could read that says "no such ticket" (null) means the ticket is gone. Any error (no signal, a busy or
+     broken server, an answer it can't read) keeps what the page shows, says there's no signal and tries again. Each call is numbered: a
+     check that started before Bring my car (or an earlier check) finished never puts back what the page showed before it. */
+  function tick(){ clearTimeout(G.timer); if(!m){ G.err = 'miss'; render(); return Promise.resolve(); } var id = ++G.n;
+    return read().then(function(d){ if(id <= G.reqDone || id <= G.readDone) return; G.readDone = id;
+        if(d){ G.d = d; G.err = ''; if(G.noteAt && Date.now() - G.noteAt > 4000) say(''); } else { G.d = null; G.err = 'miss'; } },
+      function(){ if(id <= G.reqDone || id <= G.readDone) return; G.err = 'net'; }).then(function(){ render(); next(); }); }
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) tick(); wake(); });
+  root.addEventListener('click', function(e){ var t = e.target.closest ? e.target.closest('button') : null; if(!t) return;
+    if(t.hasAttribute('data-lang')){ try { var nl = lang() === 'es' ? 'en' : 'es'; localStorage.setItem('tablescape-lang', nl); localStorage.setItem('ts-valet-lang', nl); } catch(x){} G.base = ''; render(); var b = root.querySelector('[data-lang]'); if(b) b.focus(); return; }
+    if(t.hasAttribute('data-retry')){ tick(); return; }
+    var req = t.hasAttribute('data-bring') ? 'request' : t.hasAttribute('data-cancel') ? 'cancel' : ''; if(!req || G.busy) return;
+    if(req === 'request') try { G.ac = G.ac || new (window.AudioContext || window.webkitAudioContext)(); if(G.ac.state === 'suspended') G.ac.resume(); } catch(x){ G.ac = null; }
+    G.busy = true; render(); say(''); ++G.n;
+    read(req).then(function(d){ if(d){ G.d = d; G.err = ''; } }, function(e){ say(errText(e)); }).then(function(){ G.reqDone = G.n; G.busy = false; render(); next(); var h = document.getElementById('vl-h'); if(h){ h.tabIndex = -1; try { h.focus({preventScroll:true}); } catch(x){} } }); });
+  window.VL_LIGHT = {tick:tick, state:G};   /* for the browser test */
+  tick();
+})();
+</script>
+</body></html>

@@ -1,0 +1,848 @@
+{
+ "app": "com.tablescapestudio.app",
+ "version": "202611192105-061069e5",
+ "seq": 1795122333992,
+ "built": "2026-11-19T21:05:33.992Z",
+ "source": {
+  "branch": "release/app-1.0.2",
+  "commit": "de61fdac49979d786e962989169017a1f1c550a6",
+  "dirty": false
+ },
+ "files": [
+  {
+   "path": "apple-touch-icon.png",
+   "sha256": "053821f26a29d74a4f2d2ab9b2e5c171e7924c5f9ac060720fd9c0631a9edcd8",
+   "size": 31954
+  },
+  {
+   "path": "assets3d/hdri-day.hdr",
+   "sha256": "ff7c6edfdea39f008c3d2e73cb81a8a6c0e6cc9c8bf72f0862e39341e9f4e160",
+   "size": 426700
+  },
+  {
+   "path": "assets3d/hdri-evening.hdr",
+   "sha256": "fd0225602f8381d17a4f04174101d1f0ff543a8bfbab1f3074f6ab6bd863d385",
+   "size": 355656
+  },
+  {
+   "path": "assets3d/parquet-color.webp",
+   "sha256": "4423702302029bc1b0f0979f3b60bdcff6d1bbf90be1ce77867386f000d09602",
+   "size": 166064
+  },
+  {
+   "path": "assets3d/parquet-normal.webp",
+   "sha256": "593014677829e1a4083d93b31e46d0c7b2cab164c96844cb27de78abcfaf7ce6",
+   "size": 26860
+  },
+  {
+   "path": "assets3d/parquet-rough.webp",
+   "sha256": "37237850d13e5df6fb028fc4d06ea7d3dd5dc9a56e8ce3cab0319648f2fbc4e1",
+   "size": 47616
+  },
+  {
+   "path": "assets3d/wood-floor-color.webp",
+   "sha256": "f080efd6d0fe644c9661c862ada2b98ceb1f035e5edcedc2692380a28dd1b790",
+   "size": 129764
+  },
+  {
+   "path": "assets3d/wood-floor-normal.webp",
+   "sha256": "dadb04a0ce3538e5ad7418196233a89b79c9dea07503bb1ed9b2132518a6d1ca",
+   "size": 28414
+  },
+  {
+   "path": "assets3d/wood-floor-rough.webp",
+   "sha256": "c9e0a73da123037a64536b87a445e8b438fcc9fc9de20dadab82ce919ca94900",
+   "size": 70126
+  },
+  {
+   "path": "event-icon-180.png",
+   "sha256": "cebb96ed8b5300594850d1cea6679b2cfda9585b6477308398e21ee0a0d0aef2",
+   "size": 36373
+  },
+  {
+   "path": "event-icon-192.png",
+   "sha256": "f87fcd4b62ca9e923f6cd7ebddd17deb64e45de78e14695c54f548c855e28a7f",
+   "size": 40848
+  },
+  {
+   "path": "event-icon-32.png",
+   "sha256": "533eeee43a950f25860444d720deed6442f658f240051c3a0d312772ed21c460",
+   "size": 1398
+  },
+  {
+   "path": "favicon.ico",
+   "sha256": "cb4e7ef7b01a75523c1c7afbc6ca149d2bf3f4e0d2b174d105bf6ca861c0665b",
+   "size": 2760
+  },
+  {
+   "path": "food/asada.jpg",
+   "sha256": "12dbd0fbac06012b6ca4c97675e333ffbe2040acd9dc0f7ba4eb02b816506cae",
+   "size": 73484
+  },
+  {
+   "path": "food/asparagus.jpg",
+   "sha256": "5a82c661128577459a2b956b4907118fdd31dd0aaf8248e4dc29ecb99589bcc8",
+   "size": 28264
+  },
+  {
+   "path": "food/beans.jpg",
+   "sha256": "566e0a933451585a9e795b27b0d846a88aa554ad0f9ab1951ec9666d03082533",
+   "size": 27184
+  },
+  {
+   "path": "food/branzino.jpg",
+   "sha256": "2a578c12a305c5103ccba29963a4925fe66865654b235e95217f36864fcec902",
+   "size": 114755
+  },
+  {
+   "path": "food/caper.jpg",
+   "sha256": "aa323d754814a3b0d866c0c6745c3fafc4fef4236b2624e4302e104e18cde594",
+   "size": 37873
+  },
+  {
+   "path": "food/carrots.jpg",
+   "sha256": "7a32189d61fd1cfeb533eaa4ff738111c745dfe526ddc7b22d9f3f6343f664a8",
+   "size": 37758
+  },
+  {
+   "path": "food/chicken.jpg",
+   "sha256": "8259ef3ac894cd72b77f92eb11d0adca263dd1fb2a2292b836a8504e894caa22",
+   "size": 69049
+  },
+  {
+   "path": "food/cilantro.jpg",
+   "sha256": "36f3bb73d25704f7aa99e4172828e3fa6d9cd22a485a634b8d53a1267a6a6f53",
+   "size": 55369
+  },
+  {
+   "path": "food/corn.jpg",
+   "sha256": "611ccc1c72345828021a326115d13254186695540627bdc722266c5a7c17a92c",
+   "size": 18308
+  },
+  {
+   "path": "food/credits.json",
+   "sha256": "1843fe9c3b72c90a4b9200c3e376ffc6e060092803866f5d70651eb2c0ccd407",
+   "size": 2944
+  },
+  {
+   "path": "food/dill.jpg",
+   "sha256": "67ecaa786b9c4164bf17a556f10e410bbbbe741562693391e9c87c8e6c9e7736",
+   "size": 34384
+  },
+  {
+   "path": "food/enchiladas.jpg",
+   "sha256": "452ca14a54f1c2670c28c4a4b03a2c7150203ce5a35b2a6e0364724cdeebf786",
+   "size": 81638
+  },
+  {
+   "path": "food/filet.jpg",
+   "sha256": "ee4167ebaaf3ddb1f410240a55bdafc46364796f1d50dc6ff677156c517bd0e4",
+   "size": 98011
+  },
+  {
+   "path": "food/flowers.jpg",
+   "sha256": "1e79144a6ba70a303589221a260eb4fe0a07a2284bccfae92c683154c7c3bff1",
+   "size": 70860
+  },
+  {
+   "path": "food/fries.jpg",
+   "sha256": "ea4c8811a1a9d4f179579c2c29d12da3fa1c60341cfbeef054b1846b879f15ff",
+   "size": 31265
+  },
+  {
+   "path": "food/fruit.jpg",
+   "sha256": "92cbe98e868ba4452e87bab0edfb90c030a2df3c4968f1a5afde3fe6bce98808",
+   "size": 32128
+  },
+  {
+   "path": "food/gratin.jpg",
+   "sha256": "1b8665e1d7ef616feaa6a6212dcf88c22b5b4256d96383c0ac8f598f1aa24a15",
+   "size": 25652
+  },
+  {
+   "path": "food/lemon.jpg",
+   "sha256": "ae35f91f1d53d44947dc41e63a34c4477130578c844d8be40644d86899916349",
+   "size": 19341
+  },
+  {
+   "path": "food/mac.jpg",
+   "sha256": "c99d6de2de8926a87c41b18777b70547d4fddb7c0ae057b7c546f01ec7c55f82",
+   "size": 33276
+  },
+  {
+   "path": "food/mash.jpg",
+   "sha256": "1f6e5292d16bccafce2ec522c5f02febdb9e20845bb64e0701a331f218fa8cd0",
+   "size": 28645
+  },
+  {
+   "path": "food/micro.jpg",
+   "sha256": "14d447fc55dc63a147e1969df3a643f9aa260c238ba53a117e3cbf87306181d0",
+   "size": 27231
+  },
+  {
+   "path": "food/onion.jpg",
+   "sha256": "6576c4d3a1a9b2a46a75708b300ce2d79e134348cb28d21ef66efc275efd451d",
+   "size": 27365
+  },
+  {
+   "path": "food/parm.jpg",
+   "sha256": "16d856e99bf367ab76e3a0faecb9d67ce44cb95411ff7b48c05f06277bde9c67",
+   "size": 35241
+  },
+  {
+   "path": "food/pasta.jpg",
+   "sha256": "e5e0fdc79a5332508469183e3ee58c4a3017802cb026a5ded0d384d1ecaeb1c3",
+   "size": 95019
+  },
+  {
+   "path": "food/pernil.jpg",
+   "sha256": "a7202721a7036424e5f87f1cb3122318831d963d3cc39d4a1d5418850f58a608",
+   "size": 131843
+  },
+  {
+   "path": "food/pilaf.jpg",
+   "sha256": "af162fab270ce4e9132de525453c0072c5934100e9050a0b002b17dbd3f11266",
+   "size": 41673
+  },
+  {
+   "path": "food/pom.jpg",
+   "sha256": "cd08ad2fd279727587d95b32fa4f945c90c10f731c6e2dada608b3be1ccfad08",
+   "size": 51744
+  },
+  {
+   "path": "food/portobello.jpg",
+   "sha256": "7a33b356088317f1ae0cc6af6724568cb5bd13c355f229e277d1ae275a5d12a3",
+   "size": 46771
+  },
+  {
+   "path": "food/quesadilla.jpg",
+   "sha256": "ed9e71c693c0f1827c16c0506961d1c34b89e3725bc7bf2ed2df0de3f0ec8834",
+   "size": 41264
+  },
+  {
+   "path": "food/rice.jpg",
+   "sha256": "c2c06b7395af932e92b62c7c91ccdbec1d06410fe88dcb6bdb03fae65380c006",
+   "size": 41778
+  },
+  {
+   "path": "food/risotto.jpg",
+   "sha256": "e35ef2cf9afeb4415aabc578ad19d97d1348da63b99bba07966f569b63369faf",
+   "size": 76433
+  },
+  {
+   "path": "food/salmon.jpg",
+   "sha256": "5856e5fcb975faca5126bdd6f4566200df7ab21887f171c179b11a89f9166450",
+   "size": 80675
+  },
+  {
+   "path": "food/shallot.jpg",
+   "sha256": "6d5350c7cd8192f9868ef8b5b765cf6ca750e10c15b548f516b4bd11bf0074ca",
+   "size": 21589
+  },
+  {
+   "path": "food/shortrib.jpg",
+   "sha256": "241e16bba83207307b1719bc26ce6c1907d1e63248b2e7510a9be5d3d9550eb4",
+   "size": 77661
+  },
+  {
+   "path": "food/tenders.jpg",
+   "sha256": "0a895748092150ace20357d7a689f6518f2b572c060761af02dc2ebd519dacdd",
+   "size": 65106
+  },
+  {
+   "path": "food/thyme.jpg",
+   "sha256": "e683a63d8f36ea841e6d998b95c8011903a634a265a58ab94610cceb91a67ec2",
+   "size": 21754
+  },
+  {
+   "path": "food/truffle.jpg",
+   "sha256": "f1f20002caf53909fc25887d0fb8679083c6fab28fbae53e27e036be93552083",
+   "size": 24709
+  },
+  {
+   "path": "food/veg.jpg",
+   "sha256": "850fadac6c9dbaf3637190836d4151179f13c3fdb3951f0bbf87b67f514687c8",
+   "size": 49346
+  },
+  {
+   "path": "icon-192.png",
+   "sha256": "185316a38124dce3445212cf316ff8f31fe89753fcbfd002f80d8a7926fb4976",
+   "size": 35795
+  },
+  {
+   "path": "icon-512.png",
+   "sha256": "3ed3822f32dce66e1151251ecc44e5323047abcc9b7886860012586cc1fe3c5a",
+   "size": 197757
+  },
+  {
+   "path": "icon-maskable-512.png",
+   "sha256": "70b84808021c7364e1085a023122934634054380a6f0dbd4e40bdf8b2582a756",
+   "size": 202479
+  },
+  {
+   "path": "index.html",
+   "sha256": "8eb614aed7bd6776431c68dffa223009511ebd2501d28ccf8f83b334d32bea16",
+   "size": 162730
+  },
+  {
+   "path": "live-update.js",
+   "sha256": "fb64eb1d6cd84f15c5d4c8cc9d71d3c75e39d22e8e408914f9d6af832cfff2a9",
+   "size": 21564
+  },
+  {
+   "path": "looks/blue.webp",
+   "sha256": "c7655c493ec8b0126bb54118f33e3b41f9c13ac3d23836cf9456cb89ab677559",
+   "size": 79644
+  },
+  {
+   "path": "looks/blush.webp",
+   "sha256": "ea1616e0ec5f6a9cad5b308a27d17486e6511b6ed55fb901c5f75d73a52d3e24",
+   "size": 98068
+  },
+  {
+   "path": "looks/emerald.webp",
+   "sha256": "310b55e453cf143fa92080c26ed735af6ae468fb76a26250987486588842e7db",
+   "size": 113406
+  },
+  {
+   "path": "looks/mauve.webp",
+   "sha256": "1428b3e64ba43b20f3d42e98ec1462db4be66d269a8289c7d50e9ab068769e61",
+   "size": 88654
+  },
+  {
+   "path": "looks/navy.webp",
+   "sha256": "1aea296a31881a4f68a94499d9a01b2e2fdc33956f8d9b1045906fd4aa997fb3",
+   "size": 113142
+  },
+  {
+   "path": "looks/noir.webp",
+   "sha256": "53b4eb118937ce16b91ab14b1d3121e44b2a108e369051a6ec15b567ffd4def6",
+   "size": 99686
+  },
+  {
+   "path": "looks/sage.webp",
+   "sha256": "9e8c4f66742af34fe9def04cf000092bf01e91985604eed00ad52828d345ce87",
+   "size": 101446
+  },
+  {
+   "path": "looks/terracotta.webp",
+   "sha256": "953f154d24a2769c39b3af6dbe7e8a4b3f63f5a345c872da9d4a51391ab5942b",
+   "size": 107912
+  },
+  {
+   "path": "manifest.webmanifest",
+   "sha256": "4d2f1aecaadf0dabfc55c9bcb6d4cc3bc9cd9a109c923e1acb070d35c0e98497",
+   "size": 660
+  },
+  {
+   "path": "photo/centerpiece.webp",
+   "sha256": "f8d31b82edf1af1736a1a217435240581716de025a050b7620d5f8c5c283c90d",
+   "size": 346150
+  },
+  {
+   "path": "photo/chair.webp",
+   "sha256": "5cae2e37a6f4a1e68099130ae104ded9097053ae2c4e084b27e98701b52aead1",
+   "size": 124838
+  },
+  {
+   "path": "photo/floral.webp",
+   "sha256": "07c42e4661e5fb68f3749a730d3b293092e672dedfd218ea822822b152d3d46c",
+   "size": 340138
+  },
+  {
+   "path": "photo/overlay.webp",
+   "sha256": "55ecc32eab02a9294d4f90a41c2c7405bd158e71fc05c07ec816b44bd0d91013",
+   "size": 356248
+  },
+  {
+   "path": "photo/table_linen.webp",
+   "sha256": "93d9a0575a01dc7c448c945be430ea5a42ee90000903036af33ce4e1bc2974e5",
+   "size": 258436
+  },
+  {
+   "path": "sso.html",
+   "sha256": "25d3fb8dd23d49bf9a15870fafe3701d3a3649c7404690b5d4dc980749afdb2c",
+   "size": 5460
+  },
+  {
+   "path": "treasure-venue-suite/LICENSE-Cormorant-Garamond.txt",
+   "sha256": "60700d351cac4650c51f3f9db318d2a420f8b45052dba2715eb5fec41f0f6956",
+   "size": 4387
+  },
+  {
+   "path": "treasure-venue-suite/LICENSE-Jost.txt",
+   "sha256": "1af3438a4d5f0ed2bdbc5751a5a67ebf6d537334161184b7fbb68503ef0ea0c5",
+   "size": 4384
+  },
+  {
+   "path": "treasure-venue-suite/THIRD-PARTY-NOTICES.txt",
+   "sha256": "da0b50d2b62e417a4da7b1e696a176e64511231a6d5800e25978c5d73898be53",
+   "size": 1258
+  },
+  {
+   "path": "treasure-venue-suite/brand-font-1.ttf",
+   "sha256": "63e313fb9c65b6b2e177222010bbea911bfc5c79bee0fb69f8246fcc4e08c93a",
+   "size": 289788
+  },
+  {
+   "path": "treasure-venue-suite/brand-font-2.ttf",
+   "sha256": "6d37a86241a25d63f8fe6018b4c083449886b7165c1acb15edd0f574f690ecf7",
+   "size": 290236
+  },
+  {
+   "path": "treasure-venue-suite/brand-font-3.ttf",
+   "sha256": "1724047c8988ca5155bff667bc48fa52e97d57aabc6b42eebbf986f21a4be20b",
+   "size": 290496
+  },
+  {
+   "path": "treasure-venue-suite/brand-font-4.ttf",
+   "sha256": "f6fe95f2bd642e9cbab84430f157d3dcd14173f027b0859cca911c852993dce8",
+   "size": 58904
+  },
+  {
+   "path": "treasure-venue-suite/brand-font-5.ttf",
+   "sha256": "c3143e923ed1ca7bdf27f96c351fbafaebcbd3cf3f4c2d30d03e6c7f98e73d7a",
+   "size": 58796
+  },
+  {
+   "path": "treasure-venue-suite/brand-font-6.ttf",
+   "sha256": "d6ff7726ec21576cf2fdac55080b2d43832780fa981f03f0b66d2723a7c1ea09",
+   "size": 58936
+  },
+  {
+   "path": "treasure-venue-suite/brand-fonts.css",
+   "sha256": "96cdf312fe2e624abf588856842bdf9348901a92655d1d65615c07be1ffcd998",
+   "size": 988
+  },
+  {
+   "path": "treasure-venue-suite/diamond.svg",
+   "sha256": "862c9983a099d8fabcd2f3f9e05c2399dbe825c681fa84296b49b91ee480d241",
+   "size": 725
+  },
+  {
+   "path": "treasure-venue-suite/grand-craft.js",
+   "sha256": "f8c11ee770940e71b324eee3dfdb077eba368aa3abe1d8da57e08b5c5666ab1f",
+   "size": 66873
+  },
+  {
+   "path": "treasure-venue-suite/grand-profile.js",
+   "sha256": "99b7d8a9a5fa0c76208054556514e0cd638563ca54acfdca26a7b1ea7972abf6",
+   "size": 6845
+  },
+  {
+   "path": "treasure-venue-suite/grand.css",
+   "sha256": "bb1fc40b8d25c1888628db6f19d6776fb21f048e8e2b50805756d92950a1b04d",
+   "size": 9013
+  },
+  {
+   "path": "treasure-venue-suite/grand.html",
+   "sha256": "1b2aae0944ce4e68d3c329e968cddf75e378d180aa4f1c32f413100c4255b0a9",
+   "size": 5908
+  },
+  {
+   "path": "treasure-venue-suite/grand.js",
+   "sha256": "50977425780b229251cf6aef81e8308abaeb0916075b8d51a6220e02a2780369",
+   "size": 25931
+  },
+  {
+   "path": "treasure-venue-suite/index.html",
+   "sha256": "a51d116194fafed70b1e92211cef5602343ddc6c2cc65130b924fde5c2b1b1c9",
+   "size": 10276
+  },
+  {
+   "path": "treasure-venue-suite/render-golden-hour.png",
+   "sha256": "7fbecac149cfa4949f2fa88ee83ef68d16bb441b5a2073e21bce5e4bcea2fd2a",
+   "size": 600655
+  },
+  {
+   "path": "treasure-venue-suite/suite.css",
+   "sha256": "94fc2d73553b3a502297696257bfab45291d108e3cb404dd8c462a2aeeedd587",
+   "size": 18004
+  },
+  {
+   "path": "treasure-venue-suite/suite.js",
+   "sha256": "1dbbdf892d26296508ee45f7bf060d7bf78ea576a77370276bccba095120db53",
+   "size": 59197
+  },
+  {
+   "path": "treasure-venue-suite/three.min.js",
+   "sha256": "9274bbcec8d96168626c732b5d31c775aa8cfb7eaa0599bec0c175908a2c1ce2",
+   "size": 603445
+  },
+  {
+   "path": "valet.html",
+   "sha256": "5f78e610adc604b06645ec8f68902dc468061b1c499878723f01ec7fa9099cfd",
+   "size": 20267
+  },
+  {
+   "path": "vendor/bodoni-moda-italic-opsz40-v2.woff2",
+   "sha256": "9b3e6683de6da6568f43674e5667f40280677a38c04686ad0bc9fd63944a5dd3",
+   "size": 7216
+  },
+  {
+   "path": "vendor/cdn/cdn.jsdelivr.net/npm/@sparkjsdev/spark@2.3.1/dist/spark.module.min.js",
+   "sha256": "2d65ef810f06be91a31a6b617d170ce0f46b54be6e973a36f5ae810fb952f2a6",
+   "size": 2671267
+  },
+  {
+   "path": "vendor/cdn/cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js",
+   "sha256": "8596965fe918e656600a1b568d3a168f5c0d3d22a600886bb6f44a6555db01e7",
+   "size": 110797
+  },
+  {
+   "path": "vendor/cdn/cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js",
+   "sha256": "bc40c8a15196236b2314db0856f72ca0b49980cd5413b8c852a7349f5fee0859",
+   "size": 256885
+  },
+  {
+   "path": "vendor/cdn/cdn.jsdelivr.net/npm/libphonenumber-js@1.13.15/bundle/libphonenumber-min.js",
+   "sha256": "47a1ff6bec42ee76977c3fb706f7708fc3513dfcb16b341fee220dcfc1e8723b",
+   "size": 178716
+  },
+  {
+   "path": "vendor/cdn/cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+   "sha256": "98ccf17aa10c20bb1301762618fcc9b6ab3a4e7f26b6071d64d0b41154df3875",
+   "size": 364463
+  },
+  {
+   "path": "vendor/cdn/cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js",
+   "sha256": "164fc2c1c9eaf0a03aa8dfdb855e82e41a5c6922fbad8bb3238116207e26bef7",
+   "size": 20387
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/bodonimoda/v28/aFTH7PxzY382XsXX63LUYL6GYFksw-NIrKp-nvr1JuxQVAS1EmZ9.woff2",
+   "sha256": "acbfeaae7d59fe19e58268888884b785e1baae349e9fef0d690d0e489887e10a",
+   "size": 15164
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/bodonimoda/v28/aFTH7PxzY382XsXX63LUYL6GYFksw-NIrKp-nvr1KOxQVAS1Eg.woff2",
+   "sha256": "28c6d220e3f90405be04c15a278d9d84379b30f7022fbe9f7b44cb5ea5413c73",
+   "size": 27492
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/bodonimoda/v28/aFTH7PxzY382XsXX63LUYL6GYFksw-NIrKp-nvr1RuxQVAS1EmZ9.woff2",
+   "sha256": "38cce2ea5d96346669d7481dd6c42232537b7f7d4ab010eb4d9a2dbd4b25b26a",
+   "size": 15296
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/bodonimoda/v28/aFTH7PxzY382XsXX63LUYL6GYFksw-NIrKp-nvr1VOxQVAS1EmZ9.woff2",
+   "sha256": "4c1b82b10a770084243ca6d92ea87c782ab99c1e5ad7a8fc6ff2c22e76ab72e8",
+   "size": 23284
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/bodonimoda/v28/aFTQ7PxzY382XsXX63LUYJSESKjWXFBPgas.woff2",
+   "sha256": "e00904cd96a4b289e3e56f9f12c59d2f49b33f56baf384336534e61024c088d0",
+   "size": 24952
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/bodonimoda/v28/aFTQ7PxzY382XsXX63LUYJSKSKjWXFBP.woff2",
+   "sha256": "fe710b15e2acd1f30159cec96b10c3455a32d27104c29d4027c5465d81fc11fe",
+   "size": 46248
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/bodonimoda/v28/aFTQ7PxzY382XsXX63LUYJT2SKjWXFBPgas.woff2",
+   "sha256": "6f7b30017b514703febbff56a69a27a62cf0e003b78d8ef138e60eaa69532140",
+   "size": 39204
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/bodonimoda/v28/aFTQ7PxzY382XsXX63LUYJTkSKjWXFBPgas.woff2",
+   "sha256": "8db18268701ed3d6b37b49fb0dde55e145272c68a339fa0291d2fa2aca901dd6",
+   "size": 26008
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/bodonimoda/v28/aFTS7PxzY382XsXX63LUYJSPeKTcW3JNsapGZQ.woff2",
+   "sha256": "028e7c63074f7f64d914b48cdf490c8b6c275a960509f885e55dd9d4b5fa8550",
+   "size": 28008
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/bodonimoda/v28/aFTS7PxzY382XsXX63LUYJSPeKrcW3JNsao.woff2",
+   "sha256": "3fac62d55a70c44bce64ff97db280b6b1c346575ea4c26c99b40eaf2367511b5",
+   "size": 53640
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/bodonimoda/v28/aFTS7PxzY382XsXX63LUYJSPeMTcW3JNsapGZQ.woff2",
+   "sha256": "71d669c668ad1f01d618dac7dcf574b17bf5f5bd6286a3bbe12766f2943b77af",
+   "size": 32444
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/bodonimoda/v28/aFTS7PxzY382XsXX63LUYJSPeNbcW3JNsapGZQ.woff2",
+   "sha256": "57c99caa95a61ef73dfcb93b29abcd87aa9e5177e603a75d3675f87f51738287",
+   "size": 46596
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEY2tbYf-Vlh3uA.woff2",
+   "sha256": "e284f2a17fc9cca89cc30f496945bd9a2903010944a9469fb357924da21b6f6c",
+   "size": 5700
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/dmmono/v16/aFTR7PB1QTsUX8KYvumzEYOtbYf-Vlg.woff2",
+   "sha256": "0e263db52797086e763679c54f84ded8cc1249879bc27dca2bd5dd446f6d9f36",
+   "size": 8724
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthSQBK6PYK3EXw.woff2",
+   "sha256": "7f8712cbbd64135f9e74a527475a97cd8c5a49d8e0a1de7a65f8e2c30c5214d9",
+   "size": 5700
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/dmmono/v16/aFTU7PB1QTsUX8KYthqQBK6PYK0.woff2",
+   "sha256": "fd7521f3531a5ccfc655b25c4f22e9871df3ec141ad79bb27fde20d0df347b6d",
+   "size": 8688
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/greatvibes/v21/RWmMoKWR9v4ksMfaWd_JN9XBiaQoDmlrMlY.woff2",
+   "sha256": "7d8e55f33a5a625f5a6b8e39def8de8b7c1e3427931edd5cecf037aaea04aa9f",
+   "size": 28504
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/greatvibes/v21/RWmMoKWR9v4ksMfaWd_JN9XFiaQoDmlr.woff2",
+   "sha256": "0237c8316409c1e4c267156adcc6b17a1d5573320efa45b707fe39989ac3874b",
+   "size": 29596
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/greatvibes/v21/RWmMoKWR9v4ksMfaWd_JN9XIiaQoDmlrMlY.woff2",
+   "sha256": "bad8bd8b77395c78e79cf5dd883b07c180632828b1e712088f19d771df994283",
+   "size": 1940
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/greatvibes/v21/RWmMoKWR9v4ksMfaWd_JN9XJiaQoDmlrMlY.woff2",
+   "sha256": "258135d94cae32ef5544db62669f0ca21fd86cc696ba846a2cfa6c292e143c68",
+   "size": 1116
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/greatvibes/v21/RWmMoKWR9v4ksMfaWd_JN9XKiaQoDmlrMlY.woff2",
+   "sha256": "93e47792ff812a0776ac0b3c4dd88b608d96524342706e40b074a9368179e8b3",
+   "size": 7652
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/greatvibes/v21/RWmMoKWR9v4ksMfaWd_JN9XLiaQoDmlrMlY.woff2",
+   "sha256": "9db6e80f3c2cda14250c3ee41e5bf1b68280b95c00a54d994a42e845fb0da7ba",
+   "size": 46188
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/manrope/v23/xn7gYHE41ni1AdIRggOxSvfedN62Zw.woff2",
+   "sha256": "93bef303b8220d2f59dbe8db119891c9f38d94f48a26d373c28256fb2b50cba7",
+   "size": 14368
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/manrope/v23/xn7gYHE41ni1AdIRggSxSvfedN62Zw.woff2",
+   "sha256": "6b478f45d63e18352735fd427e92ae4704800a998ec3337c01b59e4f6ef87d44",
+   "size": 9308
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/manrope/v23/xn7gYHE41ni1AdIRggexSvfedN4.woff2",
+   "sha256": "8bd97e6bbbc1f602a8f791530eed1064c9a357d5731bbc76e3fc587fb068728f",
+   "size": 24436
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/manrope/v23/xn7gYHE41ni1AdIRggixSvfedN62Zw.woff2",
+   "sha256": "ddbf28cebf2fbbf800d307f020689bed6d1a96c5a22aed50fee23bf7de80d0f1",
+   "size": 8356
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/manrope/v23/xn7gYHE41ni1AdIRggmxSvfedN62Zw.woff2",
+   "sha256": "27eccb1f8944bc26f6511601bac9284786feb5e5bbb0c8035ff09ac63aaf7c52",
+   "size": 15212
+  },
+  {
+   "path": "vendor/cdn/fonts.gstatic.com/s/manrope/v23/xn7gYHE41ni1AdIRggqxSvfedN62Zw.woff2",
+   "sha256": "347c589d57130c68f9829c2cd24969eed590328078ff921ca6000a56e5a2cc84",
+   "size": 2584
+  },
+  {
+   "path": "vendor/cdn/fonts/5954cdf4422ecd5e.css",
+   "sha256": "3ce1693377f0a384eba8d3266dcf2d3cca7b3ca82b03b9a2ad9d6d5da1a0d588",
+   "size": 20337
+  },
+  {
+   "path": "vendor/cdn/fonts/66b8a573b3f6c721.css",
+   "sha256": "6b6d0f642b20c8418c573203e0d32712893bec618a2e7fbd6380632b81863fdf",
+   "size": 10450
+  },
+  {
+   "path": "vendor/link-0f230377164fbe76.js",
+   "sha256": "0f230377164fbe76d24208d9e1ce47467d782e5687c8965f690c9419d2748217",
+   "size": 40998
+  },
+  {
+   "path": "vendor/tablescape-9a29bf8f6e89ec33.js",
+   "sha256": "190e9c23572938e87ad8e968f84df17ca24ce8f06473e98402372f66eb76d633",
+   "size": 5011757
+  },
+  {
+   "path": "vendor/three-0.180.0/build/three.core.min.js",
+   "sha256": "61ba0df005b05991361d040d8ff670e1aadfd0ce7aeebd1fdb0725957a8957de",
+   "size": 381124
+  },
+  {
+   "path": "vendor/three-0.180.0/build/three.module.min.js",
+   "sha256": "e2b5ee6bccd38fd6d8a2428546b83c5f2426d84b152ef82be8055556e3b40eb6",
+   "size": 338908
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/controls/OrbitControls.js",
+   "sha256": "b97879c748170baadeb3fb84cea1ffdf4674e283dc06042f34e2acb95a76042c",
+   "size": 38703
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/environments/RoomEnvironment.js",
+   "sha256": "c20f0b4677f6128a138d7152b85cbef9091f4f45cdfa05adca04d40c1697c7ae",
+   "size": 4899
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/geometries/RoundedBoxGeometry.js",
+   "sha256": "c1b7c9bd2cddff2e3f3a0723f618a3d364a47450e3d25771d21faed88410bec8",
+   "size": 6476
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/loaders/HDRLoader.js",
+   "sha256": "d7053cfc4019f520335ae07e0fe82b4ef5a66b6766e8b253d066616184995e89",
+   "size": 12456
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/math/SimplexNoise.js",
+   "sha256": "dd1f3c42c1bc9fa1b76c1c0796d352521accf0a3a95cc7d0caf479abc5a444a2",
+   "size": 15154
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/postprocessing/EffectComposer.js",
+   "sha256": "4b8c855f28eed2570bed898adc0ab89c585a8a281ecb6d905c09d00697f9f50a",
+   "size": 8477
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/postprocessing/GTAOPass.js",
+   "sha256": "855fd7953e81c1050a4abea8af4bfeb5ad9b6d879f793a9c650e3768aaec62a3",
+   "size": 19890
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/postprocessing/MaskPass.js",
+   "sha256": "7cd08eee9d5d6f5578beaddbdcbe9c384f6873810af27f22ab7db3ceeb127aa3",
+   "size": 4694
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/postprocessing/OutputPass.js",
+   "sha256": "f5b81c96e76b6b28b4b3ba8c41c4aeb982b1e03f3d82883242d951b2ab082fa2",
+   "size": 4029
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/postprocessing/Pass.js",
+   "sha256": "444b409c235ead986893c472e720da1b779a56985c7d10b279c7944b52bd61c5",
+   "size": 4218
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/postprocessing/RenderPass.js",
+   "sha256": "fd91229aacc5830e3984b0f2bdefcf566163ea028f4c1f1ab233fa6665a133ac",
+   "size": 4112
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/postprocessing/ShaderPass.js",
+   "sha256": "e2500a5913b26bbf5148ceaae644c6edcff06a18b01494ee37bf856353d2ab9d",
+   "size": 3228
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/postprocessing/UnrealBloomPass.js",
+   "sha256": "d92742959879b461f25348b2abddc7ca0d48527e7718340bcfa29fa771e2799a",
+   "size": 14388
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/shaders/CopyShader.js",
+   "sha256": "a33057d5ac91c43304c186ac0e8816e62bb2ed471d3a00ff3018dfd5c0389718",
+   "size": 729
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/shaders/GTAOShader.js",
+   "sha256": "d4b06ed5bbb7a177be6b0030986916f6f085721e2745e4632ab1773d02ca743c",
+   "size": 11910
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/shaders/LuminosityHighPassShader.js",
+   "sha256": "5044f780b6e6cf863947f64c36fe1587132f7fbe395ada863cd1e5f0388dcf1e",
+   "size": 1291
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/shaders/OutputShader.js",
+   "sha256": "353479f77a8d7e2629d49ccac9fc2f5dbfdda5442e0adf867b00377a2fcb0cb2",
+   "size": 1876
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/shaders/PoissonDenoiseShader.js",
+   "sha256": "e01b574599d31ae3b9f08c6112da72c06bbd536ccbde094fd46e4bebe579e473",
+   "size": 6945
+  },
+  {
+   "path": "vendor/three-0.180.0/examples/jsm/utils/BufferGeometryUtils.js",
+   "sha256": "fda7e946b8e0b5ab39b779206589e7a1079a22eb24efb89d7223e03fdfb1f751",
+   "size": 35539
+  },
+  {
+   "path": "venue/the-grand/ballroom-burgundy-windows.webp",
+   "sha256": "dd826ef12c0a0ea7370b8bfeb7de5e91436f8960aec2ac69018b936fcca75d95",
+   "size": 335940
+  },
+  {
+   "path": "venue/the-grand/ballroom-burgundy.webp",
+   "sha256": "b0403e132785b47abc056db509d183a5b8d36ac40efc225b4f46f214e4aff686",
+   "size": 318560
+  },
+  {
+   "path": "venue/the-grand/ballroom-navy.webp",
+   "sha256": "7ded5b6eb0dde1e0e1ab37445a712c58bf8f537042a68dc50257221594becdc4",
+   "size": 326816
+  },
+  {
+   "path": "venue/the-grand/foyer.webp",
+   "sha256": "03e02e75b5c99845adccca8117c4f2fd77ade0c54ebf04cf769c19ba42429492",
+   "size": 180532
+  },
+  {
+   "path": "venue/the-grand/head-table-burgundy.webp",
+   "sha256": "d291774ed12733f484848d58615c798febc76b86327707c11691c7af74de8ce8",
+   "size": 259772
+  },
+  {
+   "path": "venue/the-grand/table-burgundy.webp",
+   "sha256": "c5a970d7c10f7e1ed2fb40fad9e2a4afced7c9d5dd31723dc11567e1c70e29f4",
+   "size": 360304
+  },
+  {
+   "path": "venue/the-grand/table-navy.webp",
+   "sha256": "94ea835ee651c81d0282cea6c38bb7b2f5a0ed3f523219a5645fc6025cf2e53c",
+   "size": 338750
+  },
+  {
+   "path": "venue/the-grand/thumbs/ballroom-burgundy-windows.webp",
+   "sha256": "b67ba2bfcc78fc58275ffc69b511aa61445eefb39a878084bab3e91fbb5c657a",
+   "size": 54050
+  },
+  {
+   "path": "venue/the-grand/thumbs/ballroom-burgundy.webp",
+   "sha256": "e9bbdb3eeb79cb22548797ad794cc932272b6e98d54fa3077419599ed6e17113",
+   "size": 53388
+  },
+  {
+   "path": "venue/the-grand/thumbs/ballroom-navy.webp",
+   "sha256": "ebea56518972ce220c9937ca97a5b9310c73b938d376e1d243619163c21a1789",
+   "size": 53882
+  },
+  {
+   "path": "venue/the-grand/thumbs/foyer.webp",
+   "sha256": "3b4b73864fcf18ae29add3aaa6cf66939d5c7b0a227bf8052af57d4cda9d1ddd",
+   "size": 27798
+  },
+  {
+   "path": "venue/the-grand/thumbs/head-table-burgundy.webp",
+   "sha256": "6b77f328b45378665fea238754aa247c63822cfa160b07ec531ef30028f0190d",
+   "size": 42028
+  },
+  {
+   "path": "venue/the-grand/thumbs/table-burgundy.webp",
+   "sha256": "186df4405a8af9c8916ba2c0d6a0abdfc2ea79982b800aaf06adb81d9f055ae7",
+   "size": 59994
+  },
+  {
+   "path": "venue/the-grand/thumbs/table-navy.webp",
+   "sha256": "36aec1357ff40dde46ea40fab42d3a9895caa9533ce9058e2cc72f4aa795186d",
+   "size": 62336
+  }
+ ]
+}

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 313 212" role="img" aria-label="Treasure diamond">
+  <defs>
+    <linearGradient id="treasureGold" x1="0%" y1="0%" x2="100%" y2="55%">
+      <stop offset="0%"   stop-color="#e6d69b"/>
+      <stop offset="14%"  stop-color="#c2a04a"/>
+      <stop offset="34%"  stop-color="#8c6f26"/>
+      <stop offset="52%"  stop-color="#a9861f"/>
+      <stop offset="70%"  stop-color="#e8d79e"/>
+      <stop offset="86%"  stop-color="#b9963f"/>
+      <stop offset="100%" stop-color="#8c6f26"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#treasureGold)" fill-rule="evenodd"
+        d="M59 0 H253 L307 52 L156 212 L5 52 Z
+           M55 28 L30 53 L156 205 L282 53 L257 28 Z"/>
+</svg>

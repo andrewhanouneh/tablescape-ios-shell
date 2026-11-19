@@ -9,6 +9,9 @@
  * Rules (the build fails loudly when one is broken):
  *   - A store build must load a public https address: never a tailnet name, a private or loopback address, or "staging".
  *   - APP_MODE=bundled (Tablescape only) runs the packaged www/ build instead of the hosted app: no server.url.
+ *   - APP_MODE=local runs the local-first build (scripts/build-local.mjs, dist-local/): the whole app on the phone, signed web
+ *     updates (src/live-update.js), saves on the device first. Pages open at the phone's own address (capacitor://localhost on
+ *     the iPhone, https://localhost on Android), which the API already allows; links for other people use APP_URL's address.
  *   - A test build must never load the production address, and it gets its own app ID (".test") and name (" Test"),
  *     so it can sit next to the store app on one phone.
  */
@@ -35,13 +38,16 @@ if (channel === 'test' && host === prodHost) fail(`a test build must never load 
 
 const appId = channel === 'store' ? app.appId : `${app.appId}.test`;
 const appName = channel === 'store' ? app.appName : `${app.appName} Test`;
-const nav = [...new Set([host, ...(channel === 'store' ? app.allowNavigation || [] : [])])];
+const local = process.env.APP_MODE === 'local';
+if (local && !existsSync(path.join(ROOT, 'dist-local', 'bundle.json'))) fail('APP_MODE=local needs dist-local/ first: node scripts/build-local.mjs');
+// the hosts whose pages are the app's own (native.js runs there and only there); the local app's pages are on localhost
+const nav = local ? ['localhost'] : [...new Set([host, ...(channel === 'store' ? app.allowNavigation || [] : [])])];
 
 const config = {
   appId,
   appName,
   // The hosted build ships only the shell (offline page, icon, native script) from dist-www/; APP_MODE=bundled ships www/.
-  webDir: process.env.APP_MODE === 'bundled' ? 'www' : 'dist-www',
+  webDir: local ? 'dist-local' : process.env.APP_MODE === 'bundled' ? 'www' : 'dist-www',
   backgroundColor: app.background,
   appendUserAgent: app.userAgentTag,
   loggingBehavior: 'none',
@@ -58,7 +64,7 @@ const config = {
     scrollEnabled: true,
     allowsLinkPreview: false,
     // App-Bound Domains turn on service workers in WKWebView (offline copies of pages); the hosts go in Info.plist WKAppBoundDomains.
-    limitsNavigationsToAppBoundDomains: !!app.appBoundDomains,
+    limitsNavigationsToAppBoundDomains: !!app.appBoundDomains && !local,   // the local app needs no service worker
     preferredContentMode: 'mobile',
   },
   android: {
@@ -82,7 +88,9 @@ const config = {
     SystemBars: { insetsHandling: 'native', style: app.barText === 'light' ? 'DARK' : 'LIGHT' },
   },
 };
-if (process.env.APP_MODE === 'bundled') { delete config.server.url; delete config.server.errorPath; }
+if (process.env.APP_MODE === 'bundled' || local) { delete config.server.url; delete config.server.errorPath; }
+// the local app navigates only within its own files; links to other addresses (the website too) open in the in-app browser sheet
+if (local) config.server.allowNavigation = [];
 writeFileSync(path.join(ROOT, 'capacitor.config.json'), JSON.stringify(config, null, 2) + '\n');
 
 // What the shell bundles: www/ for APP_MODE=bundled, otherwise a fresh dist-www/ with only the shell's own files.
@@ -105,4 +113,5 @@ const pub = { name: app.appName, url: url.href, hosts: nav, background: app.back
   channel, supportUrl: app.supportUrl, offline: app.offline || {} };
 writeFileSync(path.join(OUT, 'app-config.js'), `window.STORE_APP = ${JSON.stringify(pub, null, 2)};
 `);
-console.log(`configure: ${channel} build of ${appName} (${appId}) loading ${url.href}`);
+console.log(local ? `configure: ${channel} build of ${appName} (${appId}), local-first: dist-local/ on the phone, links to ${url.origin}`
+  : `configure: ${channel} build of ${appName} (${appId}) loading ${url.href}`);

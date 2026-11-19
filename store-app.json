@@ -21,5 +21,11 @@
     "title": "You are offline",
     "body": "Your events will be here as soon as you are back online."
   },
-  "appBoundDomains": true
+  "appBoundDomains": true,
+  "updates": {
+    "url": "https://app.tablescape.vip/app-bundle/",
+    "publicKey": "",
+    "publishFrom": "release/*",
+    "refuseIfBuildContains": ["signup_device"]
+  }
 }

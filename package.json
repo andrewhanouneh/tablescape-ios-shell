@@ -1,6 +1,6 @@
 {
   "name": "tablescape-studio-app",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "private": true,
   "description": "Tablescape for iOS and Android with Capacitor 8: the store build opens the hosted app (app.tablescape.vip) with native share, files, haptics and an offline screen; APP_MODE=bundled packages tablescape-studio.html instead.",
   "type": "module",

@@ -1,6 +1,8 @@
 # iOS build of the Tablescape store app: an unsigned simulator check, or a signed App Store build uploaded to TestFlight.
-# This repo is public so GitHub's macOS runners are free. It holds only the store shell; the app itself is the web app at
-# https://app.tablescape.vip. The shell is copied here from the private repo by scripts/sync-ios-shell.sh (never edit it here).
+# This repo is public so GitHub's macOS runners are free. It holds the store shell and, from 1.0.2, dist-local/: the whole
+# app built to run on the phone (docs/local-first.md in the private repo; the same files app.tablescape.vip serves). With
+# dist-local/ here the build is the local-first app (APP_MODE=local); without it, the shell that opens https://app.tablescape.vip.
+# Everything here is copied from the private repo by scripts/sync-ios-shell.sh (never edit it here).
 #
 #   Actions > iOS > Run workflow: an unsigned simulator build that opens the app in the iPhone and iPad simulators.
 #   Tick "upload": a signed App Store build, uploaded to TestFlight.
@@ -58,6 +60,7 @@ jobs:
         env:
           APP_CHANNEL: store
           APP_URL: ${{ inputs.app_url }}
+          APP_MODE: ${{ hashFiles('dist-local/bundle.json') != '' && 'local' || '' }}
         run: |
           node scripts/configure.mjs
           npx cap sync ios
