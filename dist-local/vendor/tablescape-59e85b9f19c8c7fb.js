@@ -11886,8 +11886,11 @@ const _renderPortalCrm = renderPortal; renderPortal = function(){
 };
 
 /* ---------- public lead form: ARTIFACT_URL#inquire ---------- */
-function leadFormHTML(){
-  return `<div class="rsvp-inner"><form id="lead-form" class="lf-form"><span class="eyebrow">${esc(tsCoShown() || 'Events')}</span><h2 style="font-family:var(--display);font-weight:400;font-size:32px;margin:0">Tell us about your event</h2><p class="muted" style="margin:0">We’ll check the date and get back to you, usually the same day.</p>
+/* co: who the form is for when the page knows better than the default company's name (a venue's own page names its operator: the default
+   company's database name leaked onto The Grand's page as "ANDRXW") */
+function leadFormHTML(co){
+  co = String(co || '').trim();
+  return `<div class="rsvp-inner"><form id="lead-form" class="lf-form"><span class="eyebrow">${esc(co || tsCoShown() || 'Events')}</span><h2 style="font-family:var(--display);font-weight:400;font-size:32px;margin:0">Tell us about your event</h2><p class="muted" style="margin:0">We’ll check the date and get back to you, usually the same day.</p>
     <div class="fld-row"><label class="fld"><span>Your name</span><input id="lf-name" required autocomplete="name"></label><label class="fld"><span>Email</span><input id="lf-email" type="email" required autocomplete="email"></label></div>
     <div class="fld-row"><label class="fld"><span>Phone</span><input id="lf-phone" type="tel" autocomplete="tel"></label><label class="fld"><span>Type of event</span><select id="lf-type">${Object.entries(EVENT_TYPES).map(([k, n]) => `<option value="${k}">${esc(n)}</option>`).join('')}</select></label></div>
     <div class="fld-row"><label class="fld"><span>Event date</span><input id="lf-date" type="date" min="${isoLocal()}"></label><label class="fld"><span>Guests</span><input id="lf-guests" type="number" min="0" step="5"></label><label class="fld"><span>Budget ($)</span><input id="lf-budget" type="number" min="0" step="500"></label></div>
@@ -11895,7 +11898,7 @@ function leadFormHTML(){
     <label class="toggle" style="padding-left:0"><input type="checkbox" id="lf-linen"> I only need linens and rentals</label>
     <label class="fld"><span>Anything else? Colors, style, must-haves</span><textarea class="iv-msg" rows="3" id="lf-notes"></textarea></label>
     <input id="lf-hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
-    <button class="btn primary" type="submit">Send my inquiry</button><p class="muted" id="lf-msg" style="font-size:12.5px;margin:0"></p>${tsNotice()}</form></div>`;
+    <button class="btn primary" type="submit">Send my inquiry</button><p class="muted" id="lf-msg" style="font-size:12.5px;margin:0"></p>${co ? tsNoticeHTML(co, '') : tsNotice()}</form></div>`;
 }
 function openLeadForm(){ const o = $('#rsvp-page'); o.innerHTML = leadFormHTML(); o.hidden = false; }
 document.addEventListener('submit', async e => {
@@ -12368,6 +12371,9 @@ helpMenu57 = function(){ const h = _showHelp(); if(clientMode || typeof h !== 's
 const vpSeated = R => Math.round((+R.area || (R.room ? R.room.w*R.room.h : 0))/12/10)*10;
 const VP_FOOD = [['filet','Filet mignon'],['salmon','Pan-seared salmon'],['chicken','Herb-roasted chicken'],['shortrib','Braised short rib'],['risotto','Wild mushroom risotto']];
 let vpRoom = null;
+const vpAnonVenue = () => !!(window.TS_SUPABASE && typeof TSB !== 'undefined' && TSB.anon && TSB.anon.venue !== undefined);
+const vpNoCo = () => vpAnonVenue() && (!TSB.anon.slug || (TSB.anon.looked && !TSB.anon.company));
+function vpCo(V){ const own = V && V.builtin && typeof V.client === 'string' ? V.client : ''; return vpAnonVenue() ? (TSB.anon.company && TSB.anon.company.name) || own : ''; }
 function vpHTML(V){
   const rooms = vnRooms(V) || [], levels = new Set(rooms.map(r => r.level)).size, maxSeat = Math.max(0, ...rooms.map(vpSeated)), area = rooms.reduce((a, r) => a + (+r.area || 0), 0);
   if(!rooms.some(r => r.id === vpRoom)) vpRoom = (rooms[0] || {}).id || null;
@@ -12378,10 +12384,10 @@ function vpHTML(V){
     ${rooms.length ? `<section style="display:grid;gap:10px"><h2 class="sec">Rooms</h2><div class="vp-rooms">${rooms.map(r => `<button class="vp-room" data-vproom="${esc(r.id)}" aria-pressed="${r.id === vpRoom}"><b>${esc(r.name)}</b><span>${[r.area ? (+r.area).toLocaleString() + ' sq ft' : '', r.room ? `${Math.round(r.room.w)} × ${Math.round(r.room.h)} ft` : '', vpSeated(r) ? `~${vpSeated(r)} seated` : ''].filter(Boolean).join(' · ')}</span><span>${r.level === 'basement' || r.level === -1 ? 'Lower level' : 'Ground floor'}</span></button>`).join('')}</div></section>` : ''}
     ${V.builtin ? `<section style="display:grid;gap:10px"><h2 class="sec">Dinner, plated your way</h2><p class="muted" style="margin:0">Choose your entrées and see each plate with the sides, sauce and garnish you pick, or set a buffet. Cakes are designed with you, tier by tier.</p><div class="vp-food">${VP_FOOD.map(([k, n]) => `<figure><img src="food/${k}.jpg" alt="${esc(n)}" loading="lazy"><figcaption>${esc(n)}</figcaption></figure>`).join('')}</div><p class="muted" style="font-size:11.5px;margin:0">Photos show the style of dish, not the venue’s own kitchen.</p></section>` : ''}
     <div class="vp-3d" id="vp-3d" hidden></div>
-    <section id="vp-inq" style="display:grid;gap:10px"><h2 class="sec">Plan your event here</h2>${leadFormHTML()}</section>
+    <section id="vp-inq" style="display:grid;gap:10px"><h2 class="sec">Plan your event here</h2>${vpNoCo() ? `<p class="note" role="alert">${esc('This venue’s inquiry form isn’t set up yet, so nothing can be sent from this page. Please contact the venue directly.')}</p>` : leadFormHTML(vpCo(V))}</section>
     <p class="muted" style="font-size:11.5px;margin:0">${esc((V.rules && V.rules.notes) || '')} Capacities are estimates; final numbers depend on the layout and local codes.</p></div>`;
 }
-function openVenueProfile(id){ const V = vnById(id); if(!V){ toast('That venue isn’t listed.'); return false; } const o = $('#rsvp-page'); o.innerHTML = `<div class="rsvp-inner" style="max-width:1120px">${vpHTML(V)}</div>`; o.hidden = false; o.dataset.vp = id; vpFill(V); o.scrollTop = 0; return true; }
+function openVenueProfile(id){ const V = vnById(id); if(!V){ if(vpAnonVenue()){ const o = $('#rsvp-page'); o.innerHTML = `<div class="rsvp-inner" role="alert"><span class="eyebrow">${esc('Venue')}</span><h2 style="font-family:var(--display);font-weight:400;font-size:30px;margin:0">${esc('This page isn’t available')}</h2><p class="muted">${esc('The link may be old. Ask the venue for its link.')}</p></div>`; o.hidden = false; return false; } toast('That venue isn’t listed.'); return false; } const o = $('#rsvp-page'); o.innerHTML = `<div class="rsvp-inner" style="max-width:1120px">${vpHTML(V)}</div>`; o.hidden = false; o.dataset.vp = id; vpFill(V); o.scrollTop = 0; return true; }
 function vpFill(V){ const R = (vnRooms(V) || []).find(r => r.id === vpRoom), v = $('#lf-venue'), n = $('#lf-notes'); if(v) v.value = V.name + (R ? ' · ' + R.name : ''); if(n && !n.value) n.value = R ? `Interested in the ${R.name}.` : ''; }
 document.addEventListener('click', e => {
   const o = $('#rsvp-page'); if(!o || o.hidden || !o.dataset.vp) return; const V = vnById(o.dataset.vp); if(!V) return;
@@ -13183,14 +13189,17 @@ function bar70(){ if(clientMode) return; if(plan70().tier === 'house'){ const b 
   lockScreen70(A); }
 function lockScreen70(A){ let o = $('#pl70-lock'); if(A.mode !== 'locked' || clientMode){ if(o) o.remove(); return; } if(o) return;
   document.body.insertAdjacentHTML('beforeend', `<div class="pl70-lock" id="pl70-lock"><div class="modal-card" style="width:min(560px,100%)"><span class="eyebrow">Trial ended</span><h2>Your work is waiting for you</h2><p class="muted">${esc(A.msg)}</p><p class="muted" style="font-size:12.5px">If you don’t subscribe, this data may be deleted a year after the trial ended. We email the account owner 30 days before.</p><div class="btn-row"><button class="btn primary" data-pl70="open">See plans</button></div></div></div>`); }
-function panel70(){ const A = access70(), p = A.p, ms = milestones70(); let o = $('#pl70-modal'); if(!o){ o = document.createElement('div'); o.id = 'pl70-modal'; o.className = 'modal'; document.body.appendChild(o); o.addEventListener('click', e => { if(e.target === o) o.hidden = true; }); }
+/* Plans and admin fields: Tablescape's own workspace (house) can record a plan by hand while card billing is off; everyone else sees only the
+   plans they can choose (mobile polish review, Nov 19: trial owners saw the In-house card, the admin fields and could pick a plan for free) */
+const house70 = () => plan70().tier === 'house';
+function panel70(){ const A = access70(), p = A.p, ms = milestones70(), H = house70(); let o = $('#pl70-modal'); if(!o){ o = document.createElement('div'); o.id = 'pl70-modal'; o.className = 'modal'; document.body.appendChild(o); o.addEventListener('click', e => { if(e.target === o) o.hidden = true; }); }
   const B = billOn70(), live = settled70(p);
-  const card = (k, extra) => { const d = PLANS70[k], ann = B && !live ? billAnnual70(p, k) : p.annual, on = B ? billOwner70() && !live && BUY70.includes(k) : canAdmin; return `<button class="pl70-card" data-pl70tier="${k}" aria-pressed="${B ? billPick70(p) === k : p.tier === k}"${on ? '' : ' disabled'}><b>${esc(d.name)}</b><span>${d.price ? `$${d.price[ann ? 1 : 0]} a month${ann ? ', billed yearly' : ''}` : k === 'lifetime' ? '$5,000 once' : '30 days free'}</span><span>${d.events === Infinity ? 'Unlimited events' : d.events + ' active events'}${d.seats === Infinity ? '' : ` · ${d.seats} seat${d.seats === 1 ? '' : 's'}`}</span>${extra ? `<span>${extra}</span>` : ''}</button>`; };
+  const card = (k, extra) => { const d = PLANS70[k], ann = B && !live ? billAnnual70(p, k) : p.annual, on = B ? billOwner70() && !live && BUY70.includes(k) : canAdmin && H; return `<button class="pl70-card" data-pl70tier="${k}" aria-pressed="${B ? billPick70(p) === k : p.tier === k}"${on ? '' : ' disabled'}><b>${esc(d.name)}</b><span>${d.price ? `$${d.price[ann ? 1 : 0]} a month${ann ? ', billed yearly' : ''}` : k === 'lifetime' ? '$5,000 once' : '30 days free'}</span><span>${d.events === Infinity ? 'Unlimited events' : d.events + ' active events'}${d.seats === Infinity ? '' : ` · ${d.seats} seat${d.seats === 1 ? '' : 's'}`}</span>${extra ? `<span>${extra}</span>` : ''}</button>`; };
   o.innerHTML = `<div class="modal-card" role="dialog" aria-modal="true" aria-label="Plans" style="width:min(760px,100%)"><span class="eyebrow">${A.p.tier === 'trial' && A.daysLeft >= 0 ? `Trial · ${A.daysLeft} days left` : 'Your plan'}</span><h2>${esc(A.def.name)}</h2>
     ${A.p.tier === 'trial' ? `<section><h3 class="eyebrow" style="margin:6px 0 8px">Get the most from your trial</h3><ul class="pl70-ms">${ms.map(([t, d]) => `<li class="${d ? 'done' : ''}"><i>${d ? '✓' : ''}</i><span>${esc(t)}</span></li>`).join('')}</ul></section>` : ''}
     <section><h3 class="eyebrow" style="margin:12px 0 8px">Plans</h3><div class="pl70-grid">${card('essentials')}${card('studio')}${card('signature', 'Most chosen')}</div>
-    <div class="pl70-grid" style="margin-top:10px">${card('founding', 'First 100 companies, for life while active')}${card('lifetime', 'Up to 10 seats')}${card('trial')}</div>${canAdmin && !B ? `<div class="pl70-grid" style="margin-top:10px">${card('house', 'Your own workspace: no limits, no banner')}</div>` : ''}</section>
-    ${B ? billHTML70(A) : canAdmin ? `<div class="fld-row" style="margin-top:12px;align-items:end"><label class="toggle" style="padding-left:0"><input type="checkbox" id="pl70-annual"${p.annual ? ' checked' : ''}> Billed yearly</label><label class="fld"><span>Plan ended on (leave empty while active)</span><input type="date" id="pl70-ended" value="${esc(p.endedOn || '')}"></label>${p.tier === 'trial' ? `<label class="fld"><span>Trial started</span><input type="date" id="pl70-start" value="${esc(p.trialStart || '')}"></label>` : ''}</div>
+    <div class="pl70-grid" style="margin-top:10px">${card('founding', 'First 25 companies, for life while active')}${H || p.tier === 'lifetime' ? card('lifetime', 'Up to 10 seats') : ''}${H ? card('trial') : ''}</div>${H && canAdmin && !B ? `<div class="pl70-grid" style="margin-top:10px">${card('house', 'Your own workspace: no limits, no banner')}</div>` : ''}</section>
+    ${B ? billHTML70(A) : !H && canAdmin ? '<p class="note">Card payments aren’t open yet. To start a plan or take the founding offer, write to <a href="mailto:hello@tablescape.vip">hello@tablescape.vip</a>.</p>' : canAdmin ? `<div class="fld-row" style="margin-top:12px;align-items:end"><label class="toggle" style="padding-left:0"><input type="checkbox" id="pl70-annual"${p.annual ? ' checked' : ''}> Billed yearly</label><label class="fld"><span>Plan ended on (leave empty while active)</span><input type="date" id="pl70-ended" value="${esc(p.endedOn || '')}"></label>${p.tier === 'trial' ? `<label class="fld"><span>Trial started</span><input type="date" id="pl70-start" value="${esc(p.trialStart || '')}"></label>` : ''}</div>
     <p class="note" style="margin-top:8px">Billing isn’t connected yet. After a company pays, record its plan here; when card payments are added, this updates on its own.</p>` : '<p class="note">Ask your account owner to change the plan.</p>'}
     <p class="muted" style="font-size:12px;margin:8px 0 0">After a trial: view and export for 14 days, then locked until you subscribe. After a paid plan ends: events stay viewable until a year after their date, without changes. Account data may be deleted a year after a trial or plan ends, with 30 days’ notice.</p>
     <div class="btn-row"><button class="btn" data-pl70="close">Close</button></div></div>`;
@@ -13198,8 +13207,8 @@ function panel70(){ const A = access70(), p = A.p, ms = milestones70(); let o = 
 async function set70(patch){ company.plan = Object.assign({}, plan70(), patch); await saveShared('company', company, 'tablescape-company'); bar70(); if(!$('#pl70-modal').hidden) panel70(); }
 document.addEventListener('click', e => { const b = e.target.closest('[data-pl70]'); if(b){ const a = b.dataset.pl70; if(a === 'open') panel70(); else if(a === 'checkout' || a === 'portal') bill70(a); else $('#pl70-modal').hidden = true; return; }
   const t = e.target.closest('[data-pl70tier]'); if(t && billOn70()){ if(billOwner70() && !settled70(plan70()) && BUY70.includes(t.dataset.pl70tier)){ BILL70.pick = t.dataset.pl70tier; panel70(); } return; }
-  if(t && canAdmin){ set70(Object.assign({tier:t.dataset.pl70tier, endedOn:null}, t.dataset.pl70tier === 'trial' && !plan70().trialStart ? {trialStart:iso70(Date.now())} : {})); toast(`Plan set to ${PLANS70[t.dataset.pl70tier].name}.`); } });
-document.addEventListener('change', e => { if(e.target.id === 'pl70-bill-annual'){ BILL70.annual = e.target.checked; panel70(); return; } if(!canAdmin) return; if(e.target.id === 'pl70-annual') set70({annual:e.target.checked}); if(e.target.id === 'pl70-ended') set70({endedOn:e.target.value || null}); if(e.target.id === 'pl70-start' && e.target.value) set70({trialStart:e.target.value}); });
+  if(t && canAdmin && house70()){ set70(Object.assign({tier:t.dataset.pl70tier, endedOn:null}, t.dataset.pl70tier === 'trial' && !plan70().trialStart ? {trialStart:iso70(Date.now())} : {})); toast(`Plan set to ${PLANS70[t.dataset.pl70tier].name}.`); } });
+document.addEventListener('change', e => { if(e.target.id === 'pl70-bill-annual'){ BILL70.annual = e.target.checked; panel70(); return; } if(!canAdmin || !house70()) return; if(e.target.id === 'pl70-annual') set70({annual:e.target.checked}); if(e.target.id === 'pl70-ended') set70({endedOn:e.target.value || null}); if(e.target.id === 'pl70-start' && e.target.value) set70({trialStart:e.target.value}); });
 
 /* view-only: changes are refused, with the reason */
 const _mut70 = mutate;
@@ -13412,6 +13421,11 @@ if(typeof module !== 'undefined' && module.exports) module.exports = OfflineSync
    events/<id> -> events.summary · plans/<id> -> plans.data · catalog/<key> -> catalog(key) · catalog/menu/photos/<id> -> catalog('photo:<id>') · templates/<id> -> catalog('template:<id>').
    Public pages use the database's checked functions: #inquire[-<slug>] -> submit_inquiry, #rsvp-<event>.<guest>.<guest code> -> read_guest_plan + submit_rsvp, #ev-<event>.<token> -> read_shared_plan (read-only).
    A guest code is the first 32 hex characters of sha256(client token + ':' + guest id): it opens that guest's RSVP page only, never the client's page. */
+/* A venue's own page (#venue-<id> or #venue=<id>) sends its inquiries to the company that runs the venue. It used to fall back to the default
+   workspace (web/config.json defaultSlug), so The Grand's page showed that workspace's name, "ANDRXW", and would have sent there. A venue
+   with no company here gets a plain notice instead of a form: nothing is ever sent to a default. */
+function tsVenueId(h){ try { return decodeURIComponent(String(h || '').replace(/^#venue[-=]/, '')).trim(); } catch(e){ return ''; } }
+function tsVenueSlug(id){ const m = {'the-grand':'treasure-banquets'}; return Object.prototype.hasOwnProperty.call(m, id) ? m[id] : null; }
 window.tsTok = window.tsTok || (() => '');
 window.tsGTok = window.tsGTok || (() => '');
 window.tsWTok = window.tsWTok || (() => ''); window.tsSTok = window.tsSTok || (() => '');
@@ -13636,7 +13650,8 @@ async function tsAnonSet(P, data){ const A = TSB.anon;
   if(P.kind !== 'plan') throw tsErr({code:'42501', message:'Not allowed from a shared link.'});
   const plan = data.plan || {};
   if(plan.inquiry && plan.inquiry.viaForm){ const c = plan.client || {}, I = plan.inquiry;
-    tsCheck(await TSB.sb.rpc('submit_inquiry', {company_slug:A.slug || (window.TS_SUPABASE || {}).defaultSlug, body:{name:c.name, email:c.email, phone:c.phone || '', type:plan.eventType || '', eventName:(plan.event || {}).name || '', date:(plan.event || {}).date || '', venue:(plan.event || {}).venue || '', guests:I.guests || 0, budget:I.budget || 0, source:I.source || '', notes:I.notes || '', linenOnly:!!I.linenOnly, lang:typeof lang91 === 'function' ? lang91() : 'en'}}));
+    if(A.venue !== undefined && !A.slug) throw tsErr({code:'42501', message:'This venue has no company to send to.'});
+    tsCheck(await TSB.sb.rpc('submit_inquiry', {company_slug:A.venue !== undefined ? A.slug : A.slug || (window.TS_SUPABASE || {}).defaultSlug, body:{name:c.name, email:c.email, phone:c.phone || '', type:plan.eventType || '', eventName:(plan.event || {}).name || '', date:(plan.event || {}).date || '', venue:(plan.event || {}).venue || '', guests:I.guests || 0, budget:I.budget || 0, source:I.source || '', notes:I.notes || '', linenOnly:!!I.linenOnly, lang:typeof lang91 === 'function' ? lang91() : 'en'}}));
     return; }
   if(A.kind === 'rsvp' && A.ev === P.id){ const gs = plan.guests || [], g = gs.find(x => x.id === A.gid) || gs.find(x => (x.aliases || []).includes(A.gid)) || {}, baseG = id => (((A.base || {}).guests || []).find(b => b.id === id)) || {}, said = x => x === g || (x.rsvpAt && x.rsvpAt !== baseG(x.id).rsvpAt), party = gs.filter(x => x === g || (g.household && x.household === g.household && (said(x) || (x.meal || '') !== (baseG(x.id).meal || ''))));
     A.rsvpArgs = {ev:A.ev, token:A.token, guest:A.gid, body:{guests:party.map(x => ({id:x.id, rsvp:said(x) ? x.rsvp : '', meal:x.meal || '', drink:x.drink || '', diet:x.diet || '', song:x.song || ''}))}};   /* kept for a resend when there is no signal (rvFail) */
@@ -13908,7 +13923,7 @@ if(window.TS_SUPABASE && !window.claude){
   const mRv = h.match(/^#reviews-([a-z0-9-]{3,60})$/), mJ = h.match(/^#join-([a-f0-9]{32})$/); if(mJ){ try { localStorage.setItem('ts-join', mJ[1]); } catch(e){} history.replaceState(null, '', location.pathname); }
   const mVd = h.match(/^#vendor-([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.([a-f0-9]{16,})$/), mSi = h.match(/^#site-([A-Za-z0-9_-]+)\.([a-f0-9]{16,})$/), mSt = h.match(/^#staff-([A-Za-z0-9_-]+)\.([a-f0-9]{16,})$/), mTk = h.match(/^#tk-([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.([a-f0-9]{20})$/);
   if(mR) TSB.anon = {kind:'rsvp', ev:mR[1], gid:mR[2], token:mR[3]}; else if(mE) TSB.anon = {kind:'client', ev:mE[1], token:mE[2]}; else if(mVd) TSB.anon = {kind:'vendor', ev:mVd[1], vid:mVd[2], token:mVd[3]};
-  else if(mSi) TSB.anon = {kind:'site', ev:mSi[1], token:mSi[2]}; else if(mSt) TSB.anon = {kind:'staff', ev:mSt[1], token:mSt[2]}; else if(mTk) TSB.anon = {kind:'ticket', ev:mTk[1], gid:mTk[2], code:mTk[3]}; else if(mI || mV) TSB.anon = {kind:'inquiry', slug:(mI && mI[1]) || C.defaultSlug}; else if(mRv) TSB.anon = {kind:'reviews', slug:mRv[1]};
+  else if(mSi) TSB.anon = {kind:'site', ev:mSi[1], token:mSi[2]}; else if(mSt) TSB.anon = {kind:'staff', ev:mSt[1], token:mSt[2]}; else if(mTk) TSB.anon = {kind:'ticket', ev:mTk[1], gid:mTk[2], code:mTk[3]}; else if(mI) TSB.anon = {kind:'inquiry', slug:mI[1] || C.defaultSlug}; else if(mV){ const vid = tsVenueId(h); TSB.anon = {kind:'inquiry', venue:vid, slug:tsVenueSlug(vid)}; } else if(mRv) TSB.anon = {kind:'reviews', slug:mRv[1]};
   window.tsTok = id => TSB.tokens[id] ? '.' + TSB.tokens[id] : '';
   window.tsGTok = (id, gid) => TSB.tokens[id] ? '.' + tsSha256(TSB.tokens[id] + ':' + gid).slice(0, 32) : '';
   window.tsWTok = id => TSB.tokens[id] ? '.' + tsSha256('site:' + TSB.tokens[id]).slice(0, 32) : '';
@@ -13924,7 +13939,7 @@ if(window.TS_SUPABASE && !window.claude){
       /* a shared link's page already asked for its data from its first lines (web/link-pages.js, TS_LINK): take those answers instead of asking again */
       if(TSB.anon && window.TS_LINK && typeof TS_LINK.take === 'function'){ const rpc0 = TSB.sb.rpc.bind(TSB.sb); TSB.sb.rpc = (fn, args, o) => { const p = TS_LINK.take(fn, args); return p ? p.then(r => r || rpc0(fn, args, o)) : rpc0(fn, args, o); }; }
     } catch(e){ tsLibFail(); if(!TSB.anon){ const sc = document.querySelector('#ts-auth[data-shell]'); if(sc) sc.remove(); toast('Can’t reach the server. Check your connection and reload.'); } return; }   /* a shared link shows what this phone saved, or says so on its cover, in the phone's language */
-    if(TSB.anon){ if(TSB.anon.kind !== 'ticket') try { const info = tsCheck(await TSB.sb.rpc('public_company', TSB.anon.ev ? Object.assign({ev:TSB.anon.ev, token:TSB.anon.token}, TSB.anon.kind === 'rsvp' ? {guest:TSB.anon.gid} : {}) : {company_slug:TSB.anon.slug})); if(info){ TSB.anon.company = info; TSB.anon.slug = info.slug; company = Object.assign(company, {name:info.name, email:info.email || '', phone:info.phone || ''}); } } catch(e){}
+    if(TSB.anon){ if(TSB.anon.kind !== 'ticket') try { const info = tsCheck(await TSB.sb.rpc('public_company', TSB.anon.ev ? Object.assign({ev:TSB.anon.ev, token:TSB.anon.token}, TSB.anon.kind === 'rsvp' ? {guest:TSB.anon.gid} : {}) : {company_slug:TSB.anon.slug})); TSB.anon.looked = true; if(info){ TSB.anon.company = info; TSB.anon.slug = info.slug; company = Object.assign(company, {name:info.name, email:info.email || '', phone:info.phone || ''}); } } catch(e){}
       TSB.resolve();
       /* open the shared page once the app has connected to its storage */
       const whenReady = async fn => { for(let i = 0; i < 100 && !(typeof DB !== 'undefined' && DB === tsDB); i++) await new Promise(r => setTimeout(r, 100)); fn(); };
@@ -20312,7 +20327,7 @@ var TS_ES = {
 "Finished tasks land here.": "Los pendientes terminados llegan aquí.",
 "Fire pit & s’mores": "Fogata y s’mores",
 "Fireworks display": "Espectáculo de fuegos artificiales",
-"First 100 companies, for life while active": "Primeras 100 empresas, de por vida mientras esté activa",
+"First 25 companies, for life while active": "Primeras 25 empresas, de por vida mientras esté activa",
 "first dance": "primer baile",
 "First guest": "Primer invitado",
 "First name": "Nombre",
@@ -37288,6 +37303,619 @@ function frStampPdf(d){ if(!d || !frMarkOn()) return false; const t = frMarkText
 `; document.head.appendChild(st); })();
 setTimeout(() => { try { bar70(); } catch(e){} }, 1300);
 /* ============ end of features: Free, forever ============ */
+/* mp:start */
+/* ============ phones: one calm screen, no stray highlighting, a first run that fits the person (mobile polish, release 1.0.3) ============
+   Andrew tried 1.0.2 on his phone (Nov 19): choosing a table meant scrolling past five rows of tabs and the room settings, holding a table to
+   drag it selected text, and everything was on screen at once. On a phone (up to 600 px wide, or a phone on its side) the team studio is now
+   one screen that never scrolls under a canvas:
+   - a slim title bar: the event's name (tap to rename), its date and venue (tap to change), Undo, Save and the account;
+   - a bottom bar in thumb reach with four pages picked for the person, and More for everything else (pages, tools, this event, settings);
+   - the floor plan fills the screen; the tables, room features, ceremony pieces and chairs sit in a tray at the bottom, one tap each; a
+     selected item gets a small bar on top (rotate, copy, remove, details), and its details open as a sheet;
+   - the 3D room fills the screen; its settings open as a sheet; pages scroll inside themselves, never the whole app.
+   On every touch screen a long press or a drag never selects text or opens the callout (fields and text areas still do).
+   First run: three short questions (who you are, new or not, what first), skippable, changeable later (More, or Help on a computer). The
+   answers pick the bottom bar, the page you land on and which pages lead in More. They stay on this phone, like Easy mode
+   (docs/local-first.md, "Stays on the device"). See docs/mobile-polish.md. */
+(function(){
+const mpMM = q => typeof matchMedia === 'function' ? matchMedia(q) : {matches:false, addEventListener(){}, addListener(){}};   /* tests run parts of this script outside a browser */
+const PH_Q = '(max-width:600px), (max-height:500px) and (pointer:coarse)', phMQ = mpMM(PH_Q), touchMQ = mpMM('(pointer:coarse)');
+const mpIco = (d, fill) => `<svg viewBox="0 0 24 24" fill="${fill ? 'currentColor' : 'none'}" stroke="${fill ? 'none' : 'currentColor'}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${d}</svg>`;
+const MP_ICO = {
+  events:mpIco('<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>'),
+  floor:mpIco('<rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><circle cx="9" cy="9.5" r="2.3"/><circle cx="15.5" cy="14.5" r="2.3"/><path d="M6.5 16.5h3"/>'),
+  vision:mpIco('<path d="M12 3.5l7.5 4.2v8.6L12 20.5l-7.5-4.2V7.7z"/><path d="M4.5 7.7L12 12l7.5-4.3M12 12v8.5"/>'),
+  tables:mpIco('<circle cx="12" cy="13" r="6.5"/><circle cx="12" cy="13" r="3.2"/><path d="M3 4v5.5M3 9.5c0 1 .7 1.5 1.5 1.5M3 20v-9M21 4c-1.4 1-2 3-2 5.5V12h2V20"/>'),
+  backdrop:mpIco('<path d="M4 20V5.5C4 4.7 4.7 4 5.5 4h13c.8 0 1.5.7 1.5 1.5V20"/><path d="M8 4c0 5 1.5 9 4 12 2.5-3 4-7 4-12M2.5 20h19"/>'),
+  packages:mpIco('<path d="M4 8.5L12 4l8 4.5v7L12 20l-8-4.5z"/><path d="M4 8.5L12 13l8-4.5M12 13v7M8 6.2l8 4.5"/>'),
+  guests:mpIco('<circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="16.5" cy="9.5" r="2.4"/><path d="M15.6 14.1c2.4-.2 4.3 1.3 4.9 4.4"/>'),
+  invites:mpIco('<rect x="3.5" y="5.5" width="17" height="13" rx="1.8"/><path d="M4 6.5l8 6 8-6"/>'),
+  menu:mpIco('<path d="M7 3.5v6.5a2 2 0 0 0 2 2v8.5M5 3.5v5M9 3.5v5M17 20.5V3.5c-2 1-3 3.5-3 6.5v3h3"/>'),
+  music:mpIco('<path d="M9 18V5.5l10-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>'),
+  plan:mpIco('<path d="M8 5.5h11M8 12h11M8 18.5h11"/><path d="M3.5 5.5l1 1 2-2M3.5 12l1 1 2-2M3.5 18.5l1 1 2-2"/>'),
+  client:mpIco('<path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M9.8 12h5.4M9.8 15.5h5.4"/>'),
+  budget:mpIco('<circle cx="12" cy="12" r="8.5"/><path d="M14.8 9.2c-.5-1-1.6-1.6-2.8-1.6-1.6 0-2.8.9-2.8 2.1 0 2.9 5.8 1.5 5.8 4.5 0 1.2-1.3 2.2-3 2.2-1.3 0-2.5-.7-3-1.7M12 6v1.6M12 16.4V18"/>'),
+  order:mpIco('<rect x="5" y="3.5" width="14" height="17" rx="1.8"/><path d="M9 3.5V6h6V3.5M8.5 11h7M8.5 14.5h7M8.5 18h4"/>'),
+  inv:mpIco('<rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/><rect x="8.5" y="4" width="7" height="7" rx="1"/>'),
+  more:mpIco('<circle cx="5.5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18.5" cy="12" r="1.5"/>', true),
+  search:mpIco('<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/>'),
+  dayof:mpIco('<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.2 2"/>'),
+  easy:mpIco('<path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/>'),
+  help:mpIco('<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7M12 17.2h.01"/>'),
+  person:mpIco('<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.6 7-5.6s6.2 2 7 5.6"/>'),
+  answers:mpIco('<path d="M4 6.5h10M4 12h7M4 17.5h10"/><circle cx="17.5" cy="12" r="2.5"/><path d="M17.5 4v5.5M17.5 14.5V20"/>'),
+  rotate:mpIco('<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4v4.5H15"/>'),
+  copy:mpIco('<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/>'),
+  trash:mpIco('<path d="M4.5 6.5h15M9.5 6.5V4.5h5v2M6.5 6.5l1 13.5h9l1-13.5M10 10.5v6M14 10.5v6"/>'),
+  sliders:mpIco('<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>'),
+  fit:mpIco('<path d="M4 9V4.5h4.5M20 9V4.5h-4.5M4 15v4.5h4.5M20 15v4.5h-4.5"/>'),
+  close:mpIco('<path d="M6 6l12 12M18 6L6 18"/>'),
+  check:mpIco('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
+  chev:mpIco('<path d="M6 9.5l6 6 6-6"/>'),
+};
+/* every page, as the top tabs name them (their Spanish is already in the dictionary), with the bottom bar's shorter name */
+const MP_PAGES = [['events', 'All events', 'Events', 'events', 'Events'], ['floor', 'Floor plan', 'Floor plan', 'floor', 'Design'], ['vision', 'Venue design', '3D', 'vision', 'Design'],
+  ['style', 'Tables', 'Tables', 'tables', 'Design'], ['backdrop', 'Backdrops', 'Backdrops', 'backdrop', 'Design'], ['packages', 'Packages', 'Packages', 'packages', 'Design'],
+  ['guests', 'Guests & seating', 'Guests', 'guests', 'Guests'], ['invites', 'Invitations & website', 'Invitations', 'invites', 'Guests'],
+  ['menu', 'Menu, cake & bar', 'Menu', 'menu', 'Food & music'], ['music', 'Music & lighting', 'Music', 'music', 'Food & music'], ['plan', 'Planning', 'Planning', 'plan', 'Planning'],
+  ['client', 'Proposal & billing', 'Proposal', 'client', 'Business'], ['budget', 'Budget', 'Budget', 'budget', 'Business'], ['order', 'Order sheet', 'Order sheet', 'order', 'Business'], ['inv', 'Inventory', 'Inventory', 'inv', 'Business']]
+  .map(([v, label, bar, ico, group]) => ({v, label, bar, ico, group}));
+const MP_PAGE = Object.fromEntries(MP_PAGES.map(p => [p.v, p]));
+/* first-run answers: who the person is decides the bottom bar and which pages lead in More; nothing is ever hidden for good */
+const MP_ROLES = {
+  venue:{label:'Venue owner or manager', sub:'Rooms, floor plans, proposals and bookings', bar:['events', 'floor', 'vision', 'client'], lead:['packages', 'style', 'guests', 'plan', 'menu', 'budget', 'invites']},
+  planner:{label:'Event planner', sub:'Clients, designs, guests and the day itself', bar:['events', 'floor', 'vision', 'guests'], lead:['client', 'style', 'plan', 'menu', 'invites', 'budget']},
+  decor:{label:'Decor or rental company', sub:'Linens, tables, backdrops and stock', bar:['events', 'style', 'vision', 'inv'], lead:['backdrop', 'order', 'floor', 'packages', 'client']},
+  couple:{label:'Planning my own event', sub:'A wedding, quinceañera or party of your own', bar:['floor', 'vision', 'guests', 'menu'], lead:['style', 'invites', 'music', 'plan', 'budget']}};
+const MP_BAR = ['events', 'floor', 'vision', 'guests'];
+const MP_GOALS = [['room', 'Lay out the room', 'Tables, seats and the dance floor, to scale'], ['design', 'Design the tables in 3D', 'Linens, chairs, flowers and the whole room'],
+  ['guests', 'Add guests and seating', 'Your list, meals and who sits where'], ['proposal', 'Send a client a proposal', 'Design, price and agreement in one link'],
+  ['sample', 'Look around first', 'A finished wedding to explore']];
+const MP_SETUP = 'tablescape-setup-v1';
+const mpSetup = () => { try { const v = JSON.parse(localStorage.getItem(MP_SETUP) || 'null'); return v && typeof v === 'object' ? v : null; } catch(e){ return null; } };
+const mpSetupSave = v => { try { localStorage.setItem(MP_SETUP, JSON.stringify(v)); } catch(e){} };
+const mpRole = s => s && Object.prototype.hasOwnProperty.call(MP_ROLES, s.role) ? MP_ROLES[s.role] : null;
+const mpGuest = () => typeof TSB !== 'undefined' && !!TSB.guest;
+const mpBar = () => { const r = mpRole(mpSetup()); let bar = (r ? r.bar : MP_BAR).slice();
+  if(mpGuest() && typeof TS_GUEST_VIEWS !== 'undefined'){ bar = bar.filter(v => !TS_GUEST_VIEWS.includes(v)); for(const v of (r ? r.lead : []).concat(['floor', 'vision', 'guests', 'style', 'menu', 'events'])){ if(bar.length >= 4) break; if(!bar.includes(v) && !TS_GUEST_VIEWS.includes(v)) bar.push(v); } }
+  return bar; };
+const mpPhone = () => document.documentElement.classList.contains('mp');
+const L = s => (typeof tr91 === 'function' && typeof lang91 === 'function' && lang91() === 'es') ? tr91(s) : s;
+
+/* ---- styles. Everything for phones sits under html.mp, which this script sets from PH_Q (the head's guard keeps the old rows from flashing) */
+(function(){ const st = document.createElement('style'); st.id = 'mp-css'; st.textContent = `
+/* touch screens: a long press or a drag never selects text or opens the callout. Fields still select; client and guest pages keep their
+   text selectable and only their controls are protected */
+@media (pointer:coarse){
+  html{-webkit-tap-highlight-color:transparent}
+  body:not(.client-mode):not(.vl-link):not(:has(#rsvp-page:not([hidden]))):not(:has(#vl-page:not([hidden]))){-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  body :is(button,[role=button],[role=tab],.btn,.chip,summary,label,nav,canvas,svg,img,.add-btn,.hud,.v-stage,.board,.guest,.slot){-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  body :is(input,textarea,select,[contenteditable]:not([contenteditable="false"]),.ts-selectable,.ts-selectable *){-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+  :is(button,a,[role=button],[role=tab],summary,label,select,.add-btn,.chip,.slot,.guest){touch-action:manipulation}
+  img,svg{-webkit-user-drag:none}
+  :is(.btn,.icon-btn,.add-btn,.chip,.wl57-opt,.mp-nav button,.mp-row,.mp-tile,.mp-sel button,.mp-fab):active{transform:scale(.97);transition:transform 80ms}
+  .tr57-tip .x{min-width:44px;min-height:44px;display:inline-grid;place-items:center}
+}
+/* surfaces that are dragged, on every screen */
+#plan,#vision-canvas,.v-stage,.board,.hud,.rail,.add-btn,#style-preview canvas,#bd-preview canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#vision-canvas,#vision-canvas canvas,#style-preview canvas,#bd-preview canvas{touch-action:none}
+/* parts that exist only on phones */
+.mp-meta,.mp-nav,.mp-tray-head,.mp-sel,.mp-hud,.mp-insp-head,.mp-vset-head,.mp-vfab,.mp-fab,.mp-guest-short{display:none}
+.mp-tray-head + h3{margin-top:0}   /* the rail's first heading keeps its spacing on a computer */
+.mp-insp-wrap,.mp-vset-wrap{display:contents}
+
+/* ---- the phone shell ---- */
+html.mp,html.mp body{height:100%;overflow:hidden;overscroll-behavior:none}
+/* the hosted page pads the whole page for the notch and the home indicator (web/build.mjs); on a phone the title bar and the bottom bar
+   do that themselves, so the page's own padding would count it twice and push the bottom of every page under the bar */
+html.mp{padding-top:0!important;padding-bottom:0!important}
+html.mp-app{touch-action:pan-x pan-y}   /* the store app: no page zoom (see mpNoZoom) */
+html.mp body:not(.client-mode) .app{height:100vh;height:100dvh;min-height:0;display:flex;flex-direction:column;padding-bottom:calc(58px + env(safe-area-inset-bottom))}
+html.mp body:not(.client-mode) .app > *{flex:0 0 auto}
+html.mp body.ez-on .app,html.mp body:has(#staff-mode:not([hidden])) .app,html.mp body:has(#rsvp-page:not([hidden])) .app,html.mp.mp-kb .app{padding-bottom:0}
+html.mp body:not(.client-mode) .app > main{flex:1 1 auto;overflow:hidden;min-height:0}
+html.mp .view{height:100%;min-height:0}
+html.mp .view.scroll-view,html.mp .view.style,html.mp .view.guests{overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+
+/* the title bar: one row, the event's name over its date and venue, then Undo, Save and the account */
+html.mp body:not(.client-mode) header.top{position:relative!important;top:0!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"meta act"!important;align-items:center;gap:0 8px;padding:calc(env(safe-area-inset-top) + 6px) 12px 6px!important;min-height:56px;box-shadow:0 1px 0 var(--line);z-index:40}
+html.mp body:not(.client-mode) header.top > .brand,html.mp body:not(.client-mode) header.top > nav.tabs,html.mp body:not(.client-mode) header.top > #subnav{display:none!important}
+html.mp body:not(.client-mode) header.top .event-meta{grid-area:meta!important;display:flex!important;flex-direction:column;align-items:flex-start;min-width:0;gap:0}
+html.mp body:not(.client-mode) header.top #ev-name,html.mp body:not(.client-mode) header.top #ev-date,html.mp body:not(.client-mode) header.top #ev-venue{display:none!important}
+html.mp body:not(.client-mode) .mp-meta{display:grid;gap:1px;width:100%;max-width:100%;min-height:48px;margin:0;padding:2px 0;border:0;background:none;color:var(--ink);text-align:left;cursor:pointer;align-content:center}
+html.mp .mp-meta-name{font:400 20px/1.2 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.mp .mp-meta-sub{font:500 12.5px/1.3 var(--body);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.mp body:not(.client-mode) header.top .top-actions{grid-area:act!important;display:flex!important;flex-wrap:nowrap!important;gap:6px;align-items:center;justify-content:flex-end}
+html.mp body:not(.client-mode) header.top .top-actions > :not(#undo):not(#portal-save):not(.tsacct):not(#tsacct){display:none!important}
+html.mp body:not(.client-mode) header.top #undo{display:inline-grid!important;place-items:center;width:44px!important;height:44px!important;flex:0 0 44px}
+html.mp body:not(.client-mode) header.top #portal-save{min-height:44px;padding-inline:14px}
+html.mp body:not(.client-mode) header.top #tsacct-btn{min-width:44px;min-height:44px}
+html.mp body:not(.client-mode) header.top .top-actions > #tsacct{position:relative!important;top:auto!important;right:auto!important}
+html.mp body:not(.client-mode) header.top:has(#tsacct) .event-meta{padding-right:0}
+html.mp body:not(.client-mode) header.top :is(.tsacct-signin,.tsacct-av){width:44px;height:44px}
+html.mp body:not(.client-mode) header.top #undo{order:-1}
+html.mp #sample-banner,html.mp #ts-guest-bar{padding:6px 12px!important;gap:8px!important;flex-wrap:nowrap!important;align-items:center;min-height:44px;font-size:13px}
+html.mp #ts-guest-bar .grow{display:none}html.mp #ts-guest-bar .mp-guest-short{display:block;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+html.mp #ts-guest-bar [data-tsauth="signin"]{display:none}html.mp #ts-guest-bar .btn{min-height:36px;flex:0 0 auto}
+/* one strip at most on a phone: while the sample is open its note leads (nothing in it is saved); the trial bar keeps to one line */
+html.mp body:has(#sample-banner:not([hidden])) #ts-guest-bar{display:none!important}
+html.mp #dismiss-sample{display:none!important}   /* the sample's note keeps one action on a phone: Create your own */
+html.mp #pl70-bar{padding:6px 12px!important;min-height:44px;flex-wrap:nowrap!important;gap:8px!important;align-items:center;font-size:13px}
+html.mp #pl70-bar .grow{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}html.mp #pl70-bar .grow .muted{display:none}
+html.mp #pl70-bar .btn{flex:0 0 auto;min-height:36px}
+
+/* the bottom bar */
+html.mp .mp-nav{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;position:fixed;left:0;right:0;bottom:0;z-index:45;padding:0 4px env(safe-area-inset-bottom);background:var(--surface);background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+html.mp .mp-nav button{display:grid;justify-items:center;align-content:center;gap:3px;min-height:58px;padding:6px 2px 4px;border:0;background:none;color:var(--muted);font:600 11px/1.1 var(--body);letter-spacing:.01em;cursor:pointer;min-width:0}
+html.mp .mp-nav button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.mp .mp-nav svg{width:24px;height:24px}
+html.mp .mp-nav button[aria-current="page"]{color:var(--accent)}
+html.mp body.client-mode .mp-nav,html.mp body.ez-on .mp-nav,html.mp body:has(#staff-mode:not([hidden])) .mp-nav,html.mp body:has(#rsvp-page:not([hidden])) .mp-nav,html.mp.ts-signin .mp-nav,html.mp.ts-cover .mp-nav,html.mp.mp-kb .mp-nav{display:none}
+html.mp #ez-pill{bottom:calc(70px + env(safe-area-inset-bottom))}
+html.mp .ts-auth-card{padding:58px 18px 18px!important;gap:10px!important}   /* clear of the EN / ES switch in the corner */
+html.mp .ts-auth a{display:inline-flex;align-items:center;min-height:44px}
+html.mp .gs-foot{position:sticky;bottom:0;z-index:3;background:var(--raised);padding-bottom:10px}   /* the setup's Continue stays on screen */
+/* a guest's title bar keeps one action: their work is on this phone, and the strip below offers the account */
+html.mp.mp-guest body:not(.client-mode) header.top #portal-save{display:none!important}
+html.mp.mp-strip-off #ts-guest-bar{display:none!important}
+html.mp #ts-guest-bar .mp-strip-x{flex:0 0 auto;display:inline-grid;place-items:center;width:44px;height:44px;margin-right:-8px;border:0;background:none;color:var(--muted);cursor:pointer}html.mp #ts-guest-bar .mp-strip-x svg{width:18px;height:18px}
+.mp-strip-x{display:none}
+html.mp body:not(.client-mode):not(.ez-on) :is(.toast,#toast){bottom:calc(72px + env(safe-area-inset-bottom))}
+html.mp #toast{pointer-events:none!important}html.mp #toast :is(button,a){pointer-events:auto}   /* a message never swallows a tap meant for the bar, only its own Undo */
+html.mp.mp-kb .toast{bottom:16px}
+html.mp body.ez-on #ez-pill{bottom:calc(16px + env(safe-area-inset-bottom))}
+html.mp #store-offline{bottom:calc(70px + env(safe-area-inset-bottom))!important}
+
+/* sheets */
+.mp-scrim{position:fixed;inset:0;z-index:47;background:rgba(10,8,12,.4);opacity:0;transition:opacity .2s ease}
+.mp-scrim.on{opacity:1}
+.mp-sheet{position:fixed;left:0;right:0;bottom:var(--mp-kb,0px);z-index:48;max-height:calc(100dvh - 40px - env(safe-area-inset-top) - var(--mp-kb,0px));display:flex;flex-direction:column;background:var(--surface);color:var(--ink);border-radius:20px 20px 0 0;box-shadow:0 -14px 40px -18px rgba(0,0,0,.5);padding-bottom:env(safe-area-inset-bottom);transform:translateY(105%);transition:transform .24s cubic-bezier(.2,.8,.2,1)}
+.mp-sheet.on{transform:none}
+.mp-sheet-head{display:flex;align-items:center;gap:8px;padding:6px 6px 4px 20px;min-height:56px;flex:0 0 auto}
+.mp-sheet-head h2{flex:1;margin:0;font:400 22px/1.2 var(--display)}
+.mp-x{display:inline-grid;place-items:center;width:44px;height:44px;border:0;border-radius:999px;background:none;color:var(--muted);cursor:pointer}.mp-x svg{width:22px;height:22px}
+.mp-sheet-body{overflow:auto;overscroll-behavior:contain;padding:0 14px 18px;flex:1 1 auto;min-height:0}
+.mp-sec{margin:14px 6px 6px;font:600 11px/1.2 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.mp-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mp-tile{display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);color:var(--ink);font:600 13.5px/1.25 var(--body);text-align:left;cursor:pointer}
+.mp-tile svg{width:22px;height:22px;flex:0 0 22px;color:var(--accent)}.mp-tile .mp-acct{display:block;font-weight:500;font-size:11.5px;color:var(--muted)}.mp-tile[aria-current="page"]{border-color:var(--accent)}
+.mp-rows{display:grid;gap:2px}
+.mp-row{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:6px 10px;border:0;border-radius:12px;background:none;color:var(--ink);font:600 14.5px/1.3 var(--body);text-align:left;cursor:pointer}
+.mp-row svg{width:22px;height:22px;flex:0 0 22px;color:var(--muted)}.mp-row small{display:block;font-weight:500;font-size:12.5px;color:var(--muted)}
+.mp-more-other>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:48px;margin:8px 6px 0;font:600 13.5px/1.2 var(--body);color:var(--muted);cursor:pointer}
+.mp-more-other>summary::-webkit-details-marker{display:none}.mp-more-other>summary svg{width:18px;height:18px;transition:transform .15s}.mp-more-other[open]>summary svg{transform:rotate(180deg)}
+.mp-lang{padding:4px 6px}.mp-lang .chip{min-height:44px;padding-inline:18px}
+.mp-fields{display:grid;gap:12px;padding:4px 6px 8px}
+.mp-fields label{display:grid;gap:6px;font:600 12.5px/1.2 var(--body);color:var(--muted)}
+.mp-fields input{min-height:48px;padding:0 14px;border:1px solid var(--line-strong);border-radius:12px;background:var(--surface-2);color:var(--ink);font:500 16px/1.2 var(--body)}
+@media (prefers-reduced-motion:reduce){.mp-sheet,.mp-scrim,.mp-more-other>summary svg{transition:none}}
+
+/* the floor plan: the plan fills the screen; adding sits in a tray at the bottom; a selected item gets a bar on top */
+html.mp .view.floor:not([hidden]){display:flex!important;flex-direction:column;position:relative;overflow:hidden}
+html.mp .view.floor > .stage{flex:1 1 auto;min-height:0;height:auto!important;order:0;border:0}
+html.mp .view.floor .hud-tl,html.mp .view.floor .hud-tr,html.mp .view.floor .hud-bl,html.mp .view.floor .hud-br{display:none!important}
+html.mp .view.floor > .rail{order:1;flex:0 0 auto;padding:0 0 8px!important;border:0!important;border-top:1px solid var(--line)!important;background:var(--surface);overflow:hidden;max-height:none}
+html.mp .view.floor > .rail > h3{display:none}
+html.mp .view.floor > .rail > :not(.mp-tray-head):not(.rail-list){display:none}
+html.mp .view.floor > .rail .mp-tray-head{display:flex;align-items:center;gap:6px;padding:6px 8px 6px 10px}
+html.mp .mp-seg{display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}.mp-seg::-webkit-scrollbar{display:none}
+html.mp .mp-seg button{flex:0 0 auto;min-height:44px;padding:0 10px;border:0;border-radius:999px;background:none;color:var(--muted);font:600 13px/1 var(--body);cursor:pointer}
+html.mp .mp-seg button[aria-selected="true"]{background:var(--accent-soft);color:var(--ink)}
+html.mp .mp-tray-all{flex:0 0 auto;min-height:44px;padding:0 12px;border:0;background:none;color:var(--accent);font:600 13px/1 var(--body);cursor:pointer}
+html.mp .view.floor > .rail > .rail-list{display:none}
+html.mp .view.floor > .rail[data-mp-cat="tables"] > #rail-tables,html.mp .view.floor > .rail[data-mp-cat="fixtures"] > #rail-fixtures,html.mp .view.floor > .rail[data-mp-cat="ceremony"] > #rail-ceremony,html.mp .view.floor > .rail[data-mp-cat="chairs"] > #rail-chairs{display:grid;grid-auto-flow:column;grid-auto-columns:92px;grid-template-columns:none;grid-template-rows:auto;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding:2px 12px 2px;scrollbar-width:none}
+html.mp .view.floor > .rail > .rail-list::-webkit-scrollbar{display:none}
+html.mp .view.floor > .rail .add-btn{scroll-snap-align:start;scroll-margin-inline:12px;min-height:84px;padding:10px 4px 8px;gap:4px;border-radius:14px}
+html.mp .view.floor > .rail .add-btn svg{width:30px;height:30px}
+html.mp .view.floor > .rail.mp-open > .rail-list{grid-auto-flow:row!important;grid-template-columns:repeat(auto-fill,minmax(96px,1fr))!important;grid-auto-columns:auto!important;max-height:min(52dvh,420px);overflow-y:auto;overflow-x:hidden}
+html.mp .view.floor.mp-hide-tray > .rail{display:none}
+html.mp .mp-hud{display:flex;position:absolute;top:10px;left:10px;right:10px;z-index:4;gap:8px;align-items:flex-start;justify-content:space-between;pointer-events:none}
+html.mp .mp-hud > *{pointer-events:auto}
+html.mp .mp-hud .hud-card{display:flex;gap:2px;padding:3px;border-radius:999px}
+html.mp .mp-hud .hud-card button{min-height:44px;padding:0 14px;border:0;border-radius:999px;background:none;color:var(--muted);font:600 13px/1 var(--body);cursor:pointer}
+html.mp .mp-hud .hud-card button[aria-pressed="true"]{background:var(--accent-soft);color:var(--ink)}
+html.mp .mp-fab{display:inline-grid;place-items:center;width:44px;height:44px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--ink);box-shadow:var(--shadow-sm);cursor:pointer}
+html.mp .mp-fab svg{width:22px;height:22px}
+html.mp .mp-hud .mp-fabs{display:flex;gap:8px}
+html.mp .view.floor.mp-selected .mp-hud{display:none}
+html.mp .mp-sel{display:none}
+html.mp .view.floor.mp-selected .mp-sel{display:flex;position:absolute;top:10px;left:10px;right:10px;z-index:5;align-items:center;gap:2px;padding:4px 4px 4px 14px;border:1px solid var(--line);border-radius:18px;background:color-mix(in srgb,var(--surface) 94%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:var(--shadow-sm)}
+html.mp .mp-sel b{flex:1;min-width:0;font:600 14px/1.2 var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.mp .mp-sel button{display:inline-grid;place-items:center;min-width:44px;height:44px;padding:0 8px;border:0;border-radius:12px;background:none;color:var(--ink);font:600 12.5px/1 var(--body);cursor:pointer}
+html.mp .mp-sel button svg{width:21px;height:21px}html.mp .mp-sel button.mp-danger{color:var(--warn)}
+html.mp .mp-sel .mp-sel-details{padding:0 12px;color:var(--accent)}
+html.mp #plan-pick{top:auto;bottom:10px;left:10px;right:10px;transform:none;max-width:none}
+/* the details sheet (the inspector) */
+html.mp .mp-insp-wrap{display:none}
+html.mp .view.floor.mp-insp .mp-insp-wrap{display:flex;flex-direction:column;position:absolute;left:0;right:0;bottom:0;z-index:7;max-height:min(62%,560px);background:var(--surface);border-radius:20px 20px 0 0;box-shadow:0 -14px 40px -18px rgba(0,0,0,.5)}
+html.mp .mp-insp-head{display:flex;align-items:center;gap:8px;padding:4px 6px 0 20px;min-height:52px;flex:0 0 auto}
+html.mp .mp-insp-head b{flex:1;font:600 15px/1.2 var(--body)}
+html.mp .mp-insp-head .btn{min-height:44px}
+html.mp .view.floor .mp-insp-wrap > .inspector{display:block;overflow:auto;overscroll-behavior:contain;padding:4px 18px 18px!important;border:0!important;flex:1 1 auto;min-height:0;max-height:none}
+html.mp #inspector input:not([type=checkbox]):not([type=radio]):not([type=range]),html.mp #inspector select{min-height:44px}
+html.mp #inspector .btn,html.mp #inspector button.link,html.mp #inspector .linkish{min-height:44px}
+html.mp .mp-view-pop{display:grid;gap:2px;padding:0 6px 8px}
+html.mp .mp-view-pop label{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:0 10px;border-radius:12px;font:600 14.5px/1.2 var(--body)}
+html.mp .mp-view-pop input[type=checkbox]{width:22px;height:22px}
+
+/* the 3D room fills the screen; its settings open as a sheet */
+html.mp .view.vision:not([hidden]){display:block!important;height:100%!important;position:relative}
+html.mp .view.vision .v-stage{position:absolute!important;inset:0!important;height:auto!important;min-height:0!important}
+html.mp .view.vision .v-title{left:16px;top:12px;right:68px;max-width:none}
+html.mp .view.vision .v-title h1{font-size:24px}
+html.mp .view.vision .v-hint,html.mp .view.vision .v-stats{display:none!important}
+html.mp .view.vision .v-dock{position:absolute!important;left:0;right:0;bottom:0;padding:0 12px 12px!important;display:block!important;pointer-events:none}
+html.mp .view.vision .v-dock .v-palette{pointer-events:auto;display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;scrollbar-width:none;padding:4px 2px}
+html.mp .view.vision .v-dock .v-palette::-webkit-scrollbar{display:none}
+html.mp .mp-vfab{display:inline-grid;position:absolute;top:12px;right:12px;z-index:6}
+html.mp .view.vision .mp-vset-wrap{display:none}
+html.mp .view.vision.mp-vset .mp-vset-wrap{display:flex;flex-direction:column;position:absolute;left:0;right:0;bottom:0;z-index:8;max-height:min(70%,600px);background:var(--surface);color:var(--ink);border-radius:20px 20px 0 0;box-shadow:0 -14px 40px -18px rgba(0,0,0,.6)}
+html.mp .mp-vset-head{display:flex;align-items:center;gap:8px;padding:4px 6px 0 20px;min-height:52px}
+html.mp .mp-vset-head b{flex:1;font:600 15px/1.2 var(--body)}
+html.mp .view.vision .mp-vset-wrap > .v-controls{position:static!important;width:auto!important;max-height:none!important;margin:0!important;overflow:auto;overscroll-behavior:contain;border:0;border-radius:0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding:4px 18px 18px;color:var(--ink);--v-muted:var(--muted);--v-line:var(--line)}
+html.mp .view.vision .mp-vset-wrap > .v-controls :is(button,select,label){min-height:44px}
+/* the settings were styled for the dark glass panel over the room; in the light sheet they use the page's own colors */
+html.mp .view.vision .mp-vset-wrap > .v-controls{--v-gold:var(--accent);--v-muted:var(--muted);--v-line:var(--line-strong)}
+html.mp .view.vision .mp-vset-wrap > .v-controls .v-select{color:var(--ink);background-color:var(--surface-2);border-color:var(--line-strong)}
+html.mp .view.vision .mp-vset-wrap > .v-controls .v-seg button{color:var(--ink)}html.mp .view.vision .mp-vset-wrap > .v-controls .v-seg button[aria-pressed="true"]{color:var(--on-accent)}
+html.mp .view.vision .mp-vset-wrap > .v-controls .v-toggles label{color:var(--ink)}html.mp .view.vision .mp-vset-wrap > .v-controls .v-toggles input{accent-color:var(--accent)}
+html.mp .view.vision .mp-vset-wrap > .v-controls .v-btn{color:var(--accent);border-color:var(--line-strong)}
+
+/* the other pages: one scroll each; the table and backdrop pages open on their preview, with the settings below it */
+html.mp .view.style:not([hidden]),html.mp .view.guests:not([hidden]){display:block!important}
+/* on a phone the guest list and the seating chart, and a design and its preview, are two tabs of one page instead of one long scroll */
+.mp-tabs{display:none}
+html.mp .view > .mp-tabs{display:flex;position:sticky;top:0;z-index:6;gap:4px;padding:8px 12px;background:var(--bg);box-shadow:0 1px 0 var(--line)}
+html.mp .mp-tabs button{flex:1;min-height:44px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface);color:var(--muted);font:600 13.5px/1 var(--body);cursor:pointer}
+html.mp .mp-tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+html.mp #view-guests[data-mp-tab="list"] > .board,html.mp #view-guests[data-mp-tab="seat"] > .panel{display:none!important}
+html.mp :is(#view-style,#view-backdrop)[data-mp-tab="design"] > .preview,html.mp :is(#view-style,#view-backdrop)[data-mp-tab="preview"] > .panel{display:none!important}
+html.mp :is(#view-style,#view-backdrop) > .preview{padding:12px 14px 20px!important}
+html.mp #view-guests[data-mp-tab="seat"] #board .note:has([data-b="cancel"]){position:fixed;left:12px;right:12px;bottom:calc(66px + env(safe-area-inset-bottom));z-index:44;margin:0;display:block;min-height:56px;padding:10px 100px 10px 14px!important;background:var(--raised)!important;border:1px solid var(--accent);border-radius:14px;box-shadow:var(--shadow);font-size:13.5px;line-height:1.35}
+html.mp #view-guests[data-mp-tab="seat"] #board .note [data-b="cancel"]{position:absolute;right:8px;top:50%;transform:translateY(-50%);min-height:44px;background:var(--surface);border:1px solid var(--line-strong);color:var(--ink)}
+html.mp #view-guests[data-mp-tab="seat"]:has(#board .note [data-b="cancel"]) #board{padding-bottom:120px}
+html.mp .view.guests .guest-list{max-height:none}
+html.mp .view.guests > .panel,html.mp .view.style > .panel{overflow:visible;border:0}
+html.mp .view.scroll-view > .sheet{padding-bottom:28px}
+html.mp .space-card button{min-height:44px}
+/* keyboard hints mean nothing on a phone: the whole hint goes, never just its keys (a sentence with holes) */
+html.mp #inspector .help span:has(> .kbd),html.mp .quick-hint,html.mp main p.muted:has(> .kbd){display:none}html.mp #inspector button > .kbd{display:none}
+/* every control on a phone's pages and sheets is at least 44 px (WCAG 2.5.5, Apple's 44 pt): fields, lists' buttons, chips, tabs, segments */
+html.mp :is(main, .mp-sheet, .modal-card, #fr1, .ts-auth) :is(button, summary, select, [role=button], [role=tab], input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]):not([type=hidden])){min-height:44px}
+html.mp :is(main, .mp-sheet, .modal-card) :is(button, [role=tab], [role=button]):not(.add-btn){min-width:44px}
+html.mp :is(main, .mp-sheet, .modal-card) summary{display:flex;align-items:center}
+html.mp #toast :is(button,a.btn){min-height:44px;min-width:44px}
+html.mp :is(main, .mp-sheet) .ctl > h3{min-height:44px;display:flex;align-items:center;margin:0}
+html.mp :is(main, .mp-sheet) :is(.chip, .pill, .look-tab){display:inline-flex;align-items:center}
+html.mp label.toggle{min-height:44px}
+`; document.head.appendChild(st); })();
+
+/* ---- the phone class, kept in step with the screen and with client mode */
+function mpClass(){ const on = phMQ.matches && !document.body.classList.contains('client-mode'), was = mpPhone(); document.documentElement.classList.toggle('mp', on);
+  if(on !== was){ try { mpFloorLayout(); } catch(e){} if(on && typeof currentView !== 'undefined' && currentView === 'floor') requestAnimationFrame(() => { try { fit(); } catch(e){} }); } }
+phMQ.addEventListener ? phMQ.addEventListener('change', mpClass) : phMQ.addListener(mpClass);
+new MutationObserver(mpClass).observe(document.body, {attributes:true, attributeFilter:['class']});
+
+/* ---- touch: selection only in fields (a backstop for WebViews that start a selection inside SVG text or under a finger mid-drag) */
+const mpField = el => !!(el && el.closest && el.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"]),.ts-selectable'));
+const mpPublic = () => document.body.classList.contains('client-mode') || document.body.classList.contains('vl-link') || !($('#rsvp-page') || {hidden:true}).hidden || !($('#vl-page') || {hidden:true}).hidden;
+document.addEventListener('selectstart', e => { if(!touchMQ.matches || mpPublic()) return; const t = e.target, el = t && t.nodeType === 1 ? t : t && t.parentElement; if(!mpField(el)) e.preventDefault(); }, true);
+document.addEventListener('contextmenu', e => { if(!touchMQ.matches) return; if(e.target.closest && e.target.closest('#plan,#vision-canvas,.v-stage,#style-preview,#bd-preview,.board,.rail,.mp-nav,.mp-sel')) e.preventDefault(); }, true);
+document.addEventListener('pointerdown', e => { if(e.pointerType !== 'touch' || mpField(e.target) || mpPublic()) return; const s = getSelection && getSelection(); if(s && s.rangeCount && !s.isCollapsed && !mpField(s.anchorNode && (s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement))) s.removeAllRanges(); }, true);
+/* the guest list's drag and drop is for a mouse; on touch it started a stray selection, and seating is tap a name, then tap a seat */
+const mpNoDrag = () => { if(touchMQ.matches) $$('#guest-list [draggable="true"], #board [draggable="true"]').forEach(x => x.setAttribute('draggable', 'false')); };
+for(const n of ['renderGuests', 'renderGuestList', 'renderBoard']) if(typeof window[n] === 'function'){ const f = window[n]; window[n] = function(){ const r = f.apply(this, arguments); mpNoDrag(); return r; }; }
+document.addEventListener('dragstart', e => { if(touchMQ.matches && e.target.closest && e.target.closest('#guest-list, #board')) e.preventDefault(); }, true);
+
+/* ---- a pinch on the plan keeps the selection it started with (the first finger used to select whatever it landed on) */
+{ let before = null, at = 0; const P = e => e.pointerType === 'touch' && typeof svg !== 'undefined' && svg.contains(e.target);
+  addEventListener('pointerdown', e => { if(!P(e)) return; if(e.isPrimary){ before = typeof sel !== 'undefined' && sel ? JSON.parse(JSON.stringify(sel)) : null; at = Date.now(); return; }
+    if(Date.now() - at < 600){ sel = before; const f = $('#view-floor'); if(f && f.dataset.mpInsp === 'item') delete f.dataset.mpInsp; setTimeout(() => { renderPlan(); renderInspector(); }, 0); } }, true); }   /* window capture: ahead of the pinch code, which stops the second finger */
+
+/* ---- the keyboard: with it up, the bottom bar steps aside and an open sheet rides above it */
+{ const typing = () => { const a = document.activeElement; return !!(a && a.matches && a.matches('input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=button]):not([type=submit]):not([type=color]):not([type=file]),textarea,[contenteditable]:not([contenteditable="false"])')); };
+  const kb = () => { const vv = window.visualViewport, h = vv ? Math.max(0, Math.round(innerHeight - vv.height - vv.offsetTop)) : 0, up = touchMQ.matches && typing();
+    document.documentElement.classList.toggle('mp-kb', up); document.documentElement.style.setProperty('--mp-kb', (up && h > 120 ? h : 0) + 'px'); };
+  document.addEventListener('focusin', kb); document.addEventListener('focusout', () => setTimeout(kb, 60));
+  if(window.visualViewport){ visualViewport.addEventListener('resize', kb); visualViewport.addEventListener('scroll', kb); } }
+
+/* ---- smooth drags on a phone: while a table moves, once per frame it lines up with its neighbours' centers (align77) and only it and the
+   spacing rulers are drawn again; the whole plan is drawn when the finger lifts. Computers keep the full redraw on every move. A touch the
+   phone cancels (a system gesture, switching apps) ends the drag, so the plan never stays half drawn. */
+{ let rpRaf = 0, rpDirty = false; const _rpMp = renderPlan;
+  const fast = () => { rpRaf = 0; const it = typeof drag !== 'undefined' && drag && drag.type === 'move' && byId(drag.id), root = document.getElementById('plan-root'), g = it && root && root.querySelector(`:scope > [data-id="${CSS.escape(it.id)}"]`);
+    if(!g){ _rpMp(); return; }
+    if(typeof align77 === 'function') align77(it);
+    g.setAttribute('transform', `translate(${it.x} ${it.y}) rotate(${it.rot || 0})`); rpDirty = true;
+    try { const old = root.querySelector('.sp77'); if(old) old.remove(); if(typeof overlay77 === 'function' && it.kind !== 'chair' && currentView === 'floor' && (typeof spaceOf !== 'function' || spaceOf(it) === activeSpace)) root.insertAdjacentHTML('beforeend', overlay77(it)); } catch(e){} };
+  renderPlan = function(){ if(mpPhone() && typeof drag !== 'undefined' && drag && drag.type === 'move' && drag.moved){ if(!rpRaf) rpRaf = requestAnimationFrame(fast); return; }
+    if(rpRaf){ cancelAnimationFrame(rpRaf); rpRaf = 0; } rpDirty = false; return _rpMp.apply(this, arguments); };
+  const done = () => setTimeout(() => { if(rpDirty && !(typeof drag !== 'undefined' && drag)){ rpDirty = false; if(rpRaf){ cancelAnimationFrame(rpRaf); rpRaf = 0; } _rpMp(); } }, 0);
+  svg.addEventListener('pointerup', () => { if(rpRaf && typeof drag !== 'undefined' && drag && drag.moved){ cancelAnimationFrame(rpRaf); fast(); } }, true);
+  svg.addEventListener('pointerup', done);
+  svg.addEventListener('pointercancel', () => { if(typeof drag !== 'undefined' && drag){ const moved = drag.type === 'move' && drag.moved; drag = null; if(moved) save(); if(rpRaf){ cancelAnimationFrame(rpRaf); rpRaf = 0; } rpDirty = false; _rpMp(); renderInspector(); } }); }
+
+/* ---- sheets */
+let mpOpener = null;
+function mpSheet(id, title, body, opts){ mpSheetClose(true); opts = opts || {}; mpOpener = document.activeElement;
+  document.body.insertAdjacentHTML('beforeend', `<div class="mp-scrim" id="mp-scrim"></div><div class="mp-sheet" id="${id}" role="dialog" aria-modal="true" aria-labelledby="${id}-h"><div class="mp-sheet-head"><h2 id="${id}-h">${esc(title)}</h2><button type="button" class="mp-x" data-mp="close" aria-label="${esc('Close')}">${MP_ICO.close}</button></div><div class="mp-sheet-body">${body}</div></div>`);
+  const sh = document.getElementById(id), sc = $('#mp-scrim'); if(typeof apply91 === 'function') apply91(sh);
+  requestAnimationFrame(() => { sc.classList.add('on'); sh.classList.add('on'); }); setTimeout(() => { const f = sh.querySelector(opts.focus || '.mp-sheet-body button, .mp-sheet-body input, .mp-x'); if(f) f.focus({preventScroll:true}); }, 60);
+  return sh; }
+function mpSheetClose(now){ const sh = $('.mp-sheet'), sc = $('#mp-scrim'); if(!sh && !sc) return; const rm = () => { sh && sh.remove(); sc && sc.remove(); };
+  if(now || matchMedia('(prefers-reduced-motion:reduce)').matches) rm(); else { sh && sh.classList.remove('on'); sc && sc.classList.remove('on'); setTimeout(rm, 230); }
+  if(!now && mpOpener && mpOpener.isConnected) try { mpOpener.focus({preventScroll:true}); } catch(e){} mpOpener = null; }
+document.addEventListener('click', e => { if(e.target.id === 'mp-scrim' || (e.target.closest && e.target.closest('[data-mp="close"]'))) mpSheetClose(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && $('.mp-sheet')){ e.stopImmediatePropagation(); mpSheetClose(); } }, true);
+
+/* ---- the title bar: the event's date and venue under its name, changed in a small sheet */
+function mpMetaText(){ const ev = state.event || {}, d = ev.date ? (() => { const x = new Date(ev.date + 'T00:00'); return isNaN(x) ? ev.date : x.toLocaleDateString(lang91() === 'es' ? 'es' : undefined, {weekday:'short', month:'short', day:'numeric', year:'numeric'}); })() : '';
+  return [d, mpVenue()].filter(Boolean).join(' · ') || L('Add date and venue'); }
+const mpVenue = () => { const v = String((state.event || {}).venue || '').trim(); return v === 'Venue' ? '' : v; };   /* a new plan's venue reads "Venue" until it is named */
+/* on a phone the name, date and venue are one button (a 56 px target) that opens them in a sheet, instead of three small fields */
+function mpMeta(){ const m = $('.event-meta'); if(!m) return; let b = $('#mp-meta'); if(!b){ m.insertAdjacentHTML('beforeend', '<button type="button" class="mp-meta no-tr91" id="mp-meta"><span class="mp-meta-name"></span><span class="mp-meta-sub"></span></button>'); b = $('#mp-meta'); }
+  const nm0 = ((state.event || {}).name || '').trim(), nm = !nm0 || nm0 === 'Untitled event' ? L('Untitled event') : nm0, t = mpMetaText(), a = b.querySelector('.mp-meta-name'), c = b.querySelector('.mp-meta-sub');
+  if(a.textContent !== nm) a.textContent = nm; if(c.textContent !== t) c.textContent = t; b.setAttribute('aria-label', nm + ', ' + t + '. ' + L('Change the name, date and venue')); }
+const _rhMp = renderHeader; renderHeader = function(){ const r = _rhMp.apply(this, arguments); mpMeta(); return r; };
+['date', 'venue'].forEach(k => { const el = $('#ev-' + k); if(el) el.addEventListener('input', mpMeta); });
+function mpEventSheet(){ const ev = state.event || {};
+  const sh = mpSheet('mp-evs', 'This event', `<div class="mp-fields"><label>${esc('Event name')}<input id="mp-ev-name" value="${esc(ev.name || '')}" autocomplete="off"></label><label>${esc('Date')}<input id="mp-ev-date" type="date" value="${esc(ev.date || '')}"></label><label>${esc('Venue')}<input id="mp-ev-venue" value="${esc(mpVenue())}" placeholder="${esc('Venue name')}" autocomplete="off"></label></div>`, {focus:'.mp-x'});
+  ['name', 'date', 'venue'].forEach(k => sh.querySelector('#mp-ev-' + k).addEventListener('input', e => { const o = $('#ev-' + k); if(!o) return; o.value = e.target.value; o.dispatchEvent(new Event('input', {bubbles:true})); mpMeta(); })); }
+$('#ev-name') && $('#ev-name').addEventListener('input', mpMeta);
+document.addEventListener('click', e => { if(e.target.closest && e.target.closest('#mp-meta')) mpEventSheet(); });
+
+/* ---- the bottom bar */
+function mpNav(){ let n = $('#mp-nav'); if(!n){ document.body.insertAdjacentHTML('beforeend', '<nav class="mp-nav" id="mp-nav" aria-label="Pages"></nav>'); n = $('#mp-nav'); }
+  n.innerHTML = mpBar().map(v => `<button type="button" data-mpv="${v}">${MP_ICO[MP_PAGE[v].ico]}<span>${esc(MP_PAGE[v].bar)}</span></button>`).join('') + `<button type="button" data-mpv="more" aria-haspopup="dialog">${MP_ICO.more}<span>${esc('More')}</span></button>`;
+  mpNavSync(); }
+function mpNavSync(){ const bar = mpBar(), cv = typeof currentView !== 'undefined' ? currentView : ''; $$('#mp-nav [data-mpv]').forEach(b => { const on = b.dataset.mpv === cv || (b.dataset.mpv === 'more' && !!cv && !bar.includes(cv)); if(on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }); }
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-mpv]'); if(!b) return; const v = b.dataset.mpv; if(v === 'more'){ mpMore(); return; }
+  if(v === currentView){ const sc = $('#view-' + v); if(sc) sc.scrollTo({top:0, behavior:'smooth'}); return; } switchView(v); });
+const _swMp = switchView; switchView = function(v){ const r = _swMp.apply(this, arguments); mpNavSync(); if(mpPhone()){ mpSheetClose(true); if(v === 'floor') mpFloorLayout(); if(v === 'vision') mpVisionSetup(); } return r; };
+
+/* ---- More: the rest of the pages (the person's own first), the tools, this event, settings */
+function mpMore(){ const s = mpSetup(), r = mpRole(s), bar = mpBar(), rest = MP_PAGES.filter(p => !bar.includes(p.v)), cv = currentView;
+  const locked = v => mpGuest() && typeof TS_GUEST_VIEWS !== 'undefined' && TS_GUEST_VIEWS.includes(v);
+  const lead = (r ? r.lead : ['style', 'menu', 'plan', 'invites', 'client', 'budget']).filter(v => !bar.includes(v) && !locked(v)).map(v => MP_PAGE[v]), other = rest.filter(p => !lead.includes(p));
+  const tile = p => `<button type="button" class="mp-tile" data-mpgo="${p.v}"${p.v === cv ? ' aria-current="page"' : ''}>${MP_ICO[p.ico]}<span>${esc(p.label)}${locked(p.v) ? `<small class="mp-acct">${esc('With an account')}</small>` : ''}</span></button>`;
+  const row = (k, ico, a, sub) => `<button type="button" class="mp-row" data-mpdo="${k}">${MP_ICO[ico]}<span>${esc(a)}${sub ? `<small>${esc(sub)}</small>` : ''}</span></button>`;
+  const guest = typeof TSB !== 'undefined' && TSB.guest, signedIn = !!$('#tsacct-btn.tsacct-av'), easy = typeof ezStart === 'function', studio = !!$('#treasure-suite-link') && !(typeof tsNativeApp === 'function' && tsNativeApp()) && !clientMode;
+  const body = `<div class="mp-sec">${esc(r ? 'Your pages' : 'Pages')}</div><div class="mp-tiles">${lead.map(tile).join('')}</div>
+    ${other.length ? `<details class="mp-more-other"><summary>${esc('Other pages')} ${MP_ICO.chev}</summary><div class="mp-tiles">${other.map(tile).join('')}</div></details>` : ''}
+    <div class="mp-sec">${esc('Tools')}</div><div class="mp-rows">${row('search', 'search', 'Search', 'Find any page or tool')}${guest ? '' : row('dayof', 'dayof', 'Day-of mode', 'Check-in and tasks for your staff')}${easy ? row('easy', 'easy', 'Easy mode', 'Big buttons, one step at a time') : ''}${row('help', 'help', 'Help and tours', 'A short tour of the app or this page')}${studio ? row('studio', 'vision', 'Venue studio', 'The Grand in 3D, room by room') : ''}</div>
+    <div class="mp-sec">${esc('This event')}</div><div class="mp-rows">${row('event', 'events', 'Date and venue')}${row('redo', 'rotate', 'Redo', 'Bring back what Undo took away')}<button type="button" class="mp-row" data-menu="blank">${MP_ICO.floor}<span>${esc('New event…')}</span></button><button type="button" class="mp-row" data-menu="themes">${MP_ICO.backdrop}<span>${esc('Start from an event theme…')}</span></button><button type="button" class="mp-row" data-menu="sample">${MP_ICO.vision}<span>${esc('Load the sample wedding')}</span></button>
+    <details class="mp-more-other"><summary>${esc('More options')} ${MP_ICO.chev}</summary><div class="mp-rows"><button type="button" class="mp-row" data-menu="sample-garden">${MP_ICO.vision}<span>${esc('Load the garden ceremony sample')}</span></button><button type="button" class="mp-row" data-menu="export">${MP_ICO.copy}<span>${esc('Export plan (JSON)')}</span></button><button type="button" class="mp-row" data-menu="import">${MP_ICO.order}<span>${esc('Import plan (JSON)')}</span></button></div></details></div>
+    <div class="mp-sec">${esc('Settings')}</div><div class="mp-rows">${guest ? `<button type="button" class="mp-row" data-tsauth="signup">${MP_ICO.person}<span>${esc('Create an account')}<small>${esc('Keep this event and use everything')}</small></span></button><button type="button" class="mp-row" data-tsauth="signin">${MP_ICO.person}<span>${esc('Sign in')}</span></button>` : signedIn ? row('account', 'person', 'Your account', 'Sign-in, team and workspace') : ''}${row('answers', 'answers', 'Your answers', s && r ? r.label : 'Who you are and what you do first')}</div>
+    <div class="mp-lang">${typeof tsLangChipsHTML === 'function' ? tsLangChipsHTML('6px 0 0') : ''}</div>`;
+  mpSheet('mp-more', 'More', body); }
+document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-mpgo],[data-mpdo],.mp-sheet [data-menu],.mp-sheet [data-tsauth],.mp-sheet [data-tslang]'); if(!t) return;
+  if(t.dataset.tslang){ setTimeout(() => { if($('#mp-more')) mpMore(); mpNav(); mpMeta(); }, 30); return; }   /* the language switch keeps its own handler; the sheet is drawn again in the new language */
+  if(t.dataset.menu || t.dataset.tsauth){ mpSheetClose(true); return; }   /* the Plan menu's and the sign-in card's own handlers do the rest */
+  mpSheetClose(true);
+  if(t.dataset.mpgo){ switchView(t.dataset.mpgo); return; }
+  const a = t.dataset.mpdo;
+  if(a === 'search'){ const q = $('#quick-btn'); if(q) q.click(); }
+  if(a === 'dayof'){ const b = $('#staff-btn'); if(b) b.click(); }
+  if(a === 'easy' && typeof ezStart === 'function') ezStart();
+  if(a === 'help') mpHelp();
+  if(a === 'event') mpEventSheet();
+  if(a === 'redo' && typeof redo === 'function') redo();
+  if(a === 'studio'){ const l = $('#treasure-suite-link'); if(l) l.click(); }
+  if(a === 'account'){ const b = $('#tsacct-btn'); if(b) setTimeout(() => b.click(), 30); }
+  if(a === 'answers') frOpen({again:true});
+});
+function mpHelp(){ const pageTour = typeof TOURS57 !== 'undefined' && TOURS57[currentView] ? currentView : null;
+  mpSheet('mp-help', 'Help and tours', `<div class="mp-rows"><button type="button" class="mp-row" data-mptour="main">${MP_ICO.help}<span>${esc('Tour of the whole app')}<small>${esc('About 2 minutes, with things to try')}</small></span></button>${pageTour ? `<button type="button" class="mp-row" data-mptour="${pageTour}">${MP_ICO.help}<span>${esc('Tour of this page')}</span></button>` : ''}<button type="button" class="mp-row" data-mptour="welcome">${MP_ICO.events}<span>${esc('Welcome screen')}<small>${esc('Set up an event, a theme or the sample')}</small></span></button></div>`); }
+document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-mptour]'); if(!t) return; mpSheetClose(true); const k = t.dataset.mptour; if(k === 'welcome'){ if(typeof _openWelcomeMp === 'function') _openWelcomeMp(); } else if(typeof startTour57 === 'function') startTour57(k); });
+
+/* ---- the floor plan on a phone */
+const MP_CATS = [['tables', '#rail-tables', 'Tables'], ['fixtures', '#rail-fixtures', 'Room'], ['ceremony', '#rail-ceremony', 'Ceremony'], ['chairs', '#rail-chairs', 'Chairs']];
+function mpFloorSetup(){ const f = $('#view-floor'), rail = f && f.querySelector(':scope > .rail'); if(!rail) return;
+  if(!rail.querySelector('.mp-tray-head')){ rail.dataset.mpCat = rail.dataset.mpCat || 'tables';
+    rail.insertAdjacentHTML('afterbegin', `<div class="mp-tray-head"><div class="mp-seg" role="tablist" aria-label="${esc('Add to the floor plan')}">${MP_CATS.map(([k, , l]) => `<button type="button" role="tab" data-mpcat="${k}" aria-selected="${rail.dataset.mpCat === k}">${esc(l)}</button>`).join('')}</div><button type="button" class="mp-tray-all" aria-expanded="false">${esc('See all')}</button></div>`); }
+  const stage = $('#stage');
+  if(stage && !$('#mp-hud')){ stage.insertAdjacentHTML('beforeend', `<div class="mp-hud" id="mp-hud"><div class="hud-card mp-space" role="group" aria-label="${esc('Space')}"><button type="button" data-mpspace="reception">${esc('Reception')}</button><button type="button" data-mpspace="ceremony">${esc('Ceremony')}</button></div><div class="mp-fabs"><button type="button" class="mp-fab" id="mp-fit" aria-label="${esc('Fit room')}">${MP_ICO.fit}</button><button type="button" class="mp-fab" id="mp-viewbtn" aria-label="${esc('Room and view')}" aria-haspopup="dialog">${MP_ICO.sliders}</button></div></div>
+    <div class="mp-sel" id="mp-sel" role="toolbar" aria-label="${esc('Selected item')}"><b id="mp-sel-name"></b><button type="button" data-mpsel="rot" aria-label="${esc('Rotate')}">${MP_ICO.rotate}</button><button type="button" data-mpsel="dup" aria-label="${esc('Duplicate')}">${MP_ICO.copy}</button><button type="button" data-mpsel="del" class="mp-danger" aria-label="${esc('Remove')}">${MP_ICO.trash}</button><button type="button" data-mpsel="details" class="mp-sel-details">${esc('Details')}</button><button type="button" data-mpsel="done" aria-label="${esc('Done')}">${MP_ICO.check}</button></div>`); }
+  const insp = $('#inspector'); if(insp && !insp.parentElement.classList.contains('mp-insp-wrap')){ const w = document.createElement('div'); w.className = 'mp-insp-wrap'; w.id = 'mp-insp-wrap'; insp.parentElement.insertBefore(w, insp);
+    w.insertAdjacentHTML('afterbegin', `<div class="mp-insp-head"><b id="mp-insp-title"></b><button type="button" class="btn sm" data-mpsel="close">${esc('Done')}</button></div>`); w.appendChild(insp); }
+}
+function mpFloorLayout(){ const f = $('#view-floor'); if(!f) return; mpFloorSetup();
+  const it = typeof sel !== 'undefined' && sel && sel.id && typeof byId === 'function' ? byId(sel.id) : null, cer = typeof sel !== 'undefined' && sel && sel.ceremony;
+  const phone = mpPhone(); f.classList.toggle('mp-selected', phone && !!(it || cer));
+  if(!it && !cer && f.dataset.mpInsp === 'item') delete f.dataset.mpInsp;
+  if((it || cer) && f.dataset.mpInsp === 'room') delete f.dataset.mpInsp;
+  const insp = phone && !!f.dataset.mpInsp; f.classList.toggle('mp-insp', insp); f.classList.toggle('mp-hide-tray', insp);
+  const nm = $('#mp-sel-name'); if(nm) nm.textContent = it ? (it.kind === 'table' ? tableLabel(it) : it.kind === 'chair' ? 'Chair' : (it.label || '')) : cer ? 'Ceremony seating' : '';
+  $$('#mp-sel [data-mpsel="rot"], #mp-sel [data-mpsel="dup"], #mp-sel [data-mpsel="del"]').forEach(b => b.hidden = !it);
+  const tt = $('#mp-insp-title'); if(tt) tt.textContent = f.dataset.mpInsp === 'room' ? 'Room and checks' : (nm ? nm.textContent : '');
+  const sp = typeof activeSpace !== 'undefined' ? activeSpace : 'reception'; $$('#mp-hud [data-mpspace]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mpspace === sp)); }
+let mpSeatTap = false; svg.addEventListener('pointerup', () => { mpSeatTap = !!(typeof drag !== 'undefined' && drag && drag.type === 'move' && drag.seat != null && !drag.moved); }, true);   /* read before the plan's own pointerup clears it */
+const _riMp = renderInspector; renderInspector = function(){ const r = _riMp.apply(this, arguments); try { if(mpSeatTap && typeof sel !== 'undefined' && sel && sel.seat != null && mpPhone()) $('#view-floor').dataset.mpInsp = 'item'; mpSeatTap = false; mpFloorLayout(); } catch(e){} return r; };
+document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-mpcat],.mp-tray-all,[data-mpsel],[data-mpspace],#mp-fit,#mp-viewbtn'); if(!t) return; const f = $('#view-floor'), rail = f && f.querySelector(':scope > .rail');
+  if(t.dataset.mpcat && rail){ rail.dataset.mpCat = t.dataset.mpcat; $$('.mp-seg [data-mpcat]').forEach(b => b.setAttribute('aria-selected', b === t)); const l = rail.querySelector(MP_CATS.find(c => c[0] === t.dataset.mpcat)[1]); if(l) l.scrollLeft = 0; return; }
+  if(t.classList.contains('mp-tray-all') && rail){ const open = !rail.classList.contains('mp-open'); rail.classList.toggle('mp-open', open); t.setAttribute('aria-expanded', open); t.textContent = open ? 'Show less' : 'See all'; return; }
+  if(t.id === 'mp-fit'){ fit(); return; }
+  if(t.id === 'mp-viewbtn'){ mpViewSheet(); return; }
+  if(t.dataset.mpspace){ const b = document.querySelector(`.space-card [data-space="${t.dataset.mpspace}"], #inspector [data-space="${t.dataset.mpspace}"]`); if(b) b.click(); else if(typeof switchSpace === 'function') switchSpace(t.dataset.mpspace); setTimeout(mpFloorLayout, 30); return; }
+  const a = t.dataset.mpsel, it = sel && sel.id && byId(sel.id);
+  if(a === 'rot' && it){ mutate(() => it.rot = ((Math.round((it.rot || 0) / 45) * 45) + 45 + 360) % 360, 'rot-key'); renderPlan(); renderInspector(); }
+  if(a === 'dup') duplicateSelected();
+  if(a === 'del') removeSelected();
+  if(a === 'details'){ f.dataset.mpInsp = 'item'; mpFloorLayout(); }
+  if(a === 'done'){ sel = null; delete f.dataset.mpInsp; renderPlan(); renderInspector(); }
+  if(a === 'close'){ if(f.dataset.mpInsp === 'room' || !sel) { delete f.dataset.mpInsp; mpFloorLayout(); } else { sel = null; delete f.dataset.mpInsp; renderPlan(); renderInspector(); } }
+});
+function mpViewSheet(){ const chk = id => { const c = $('#' + id); return c && c.checked ? ' checked' : ''; };
+  const sh = mpSheet('mp-view', 'Room and view', `<div class="mp-rows"><button type="button" class="mp-row" data-mpview="room">${MP_ICO.floor}<span>${esc('Room and checks')}<small>${esc('Size, look, venue and layout checks')}</small></span></button></div>
+    <div class="mp-view-pop"><label>${esc('Snap to grid')}<input type="checkbox" data-mpchk="snap"${chk('snap')}></label>${$('#measure') ? `<label>${esc('Measure')}<input type="checkbox" data-mpchk="measure"${chk('measure')}></label>` : ''}<label>${esc('Guest names')}<input type="checkbox" data-mpchk="names"${chk('names')}></label></div>
+    <div class="mp-rows"><button type="button" class="mp-row" data-mpview="pdf">${MP_ICO.order}<span>${esc('Floor plan PDF')}<small>${esc('With a table-by-table setup sheet')}</small></span></button><button type="button" class="mp-row" data-mpview="png">${MP_ICO.copy}<span>${esc('Floor plan image')}</span></button></div>`);
+  sh.addEventListener('change', e => { const k = e.target.dataset.mpchk, c = k && $('#' + k); if(!c) return; c.checked = e.target.checked; c.dispatchEvent(new Event('change', {bubbles:true})); }); }
+document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-mpview]'); if(!t) return; const k = t.dataset.mpview; mpSheetClose(true);
+  if(k === 'room'){ sel = null; renderPlan(); const f = $('#view-floor'); f.dataset.mpInsp = 'room'; renderInspector(); }
+  if(k === 'pdf' || k === 'png'){ const b = document.querySelector(`#view-floor [data-dl="plan:${k}"]`); if(b) b.click(); } });
+
+/* ---- tabs on a phone: Guests (list | seating), Tables and Backdrops (design | preview) */
+const MP_TABS = {guests:[['list', 'Guest list'], ['seat', 'Seating']], style:[['design', 'Design'], ['preview', 'Preview']], backdrop:[['design', 'Design'], ['preview', 'Preview']]};
+function mpTabs(){ for(const [v, tabs] of Object.entries(MP_TABS)){ const el = $('#view-' + v); if(!el) continue; if(!el.dataset.mpTab) el.dataset.mpTab = tabs[0][0];
+    if(!el.querySelector(':scope > .mp-tabs')) el.insertAdjacentHTML('afterbegin', `<div class="mp-tabs" role="tablist">${tabs.map(([k, l]) => `<button type="button" role="tab" data-mptab="${k}">${esc(l)}</button>`).join('')}</div>`);
+    el.querySelectorAll(':scope > .mp-tabs [data-mptab]').forEach(b => b.setAttribute('aria-selected', b.dataset.mptab === el.dataset.mpTab)); } }
+function mpTab(v, k){ const el = $('#view-' + v); if(!el) return; el.dataset.mpTab = k; mpTabs(); el.scrollTop = 0; if(k === 'preview' || k === 'seat') setTimeout(() => dispatchEvent(new Event('resize')), 30); }
+document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('[data-mptab]'); if(!t) return; const view = t.closest('.view'); if(view) mpTab(view.id.slice(5), t.dataset.mptab); });
+/* picking a guest on a phone goes straight to the seating tab, with "Placing ..." pinned on top */
+document.addEventListener('click', e => { if(!mpPhone() || !e.target.closest || !e.target.closest('#guest-list [data-pick]')) return; setTimeout(() => { if(typeof picked !== 'undefined' && picked){ mpTab('guests', 'seat'); mpSeatScroll(); } }, 0); }, true);   /* capture: the list redraws before a bubbling listener would see the tap */
+function mpSeatScroll(){ const v = $('#view-guests'), c = v && v.querySelector('#board .cards'); if(c) v.scrollTop = Math.max(0, c.getBoundingClientRect().top - v.getBoundingClientRect().top + v.scrollTop - 64); }
+
+/* ---- a new table on a phone lands on the nearest open floor, not on the last one or the dance floor */
+function mpClear(it){ if(typeof gap77 !== 'function') return true; return state.items.every(o => o === it || o.kind === 'chair' || (o.space || 'reception') !== (it.space || 'reception') || gap77(it, o).d >= 1); }
+{ const _aiMp = addItem; addItem = function(kind, type){ const r = _aiMp.apply(this, arguments);
+    try { const it = mpPhone() && kind !== 'chair' && sel && sel.id && byId(sel.id); if(it && !mpClear(it)){ const x0 = it.x, y0 = it.y, {w, h} = state.room;
+        found: for(let rad = 2; rad <= Math.min(40, Math.max(w, h)); rad += 2) for(let k = 0, K = Math.min(48, Math.max(8, Math.round(rad * 3))); k < K; k++){ const a = k / K * Math.PI * 2;
+          it.x = snap(clamp(x0 + rad * Math.cos(a), 3, w - 3)); it.y = snap(clamp(y0 + rad * Math.sin(a), 3, h - 3)); if(mpClear(it)) break found; }
+        if(!mpClear(it)){ it.x = x0; it.y = y0; } if(it.x < view.x || it.x > view.x + view.w || it.y < view.y || it.y > view.y + view.h){ view.x = it.x - view.w / 2; view.y = it.y - view.h / 2; applyView(); } save(); renderPlan(); renderInspector(); } } catch(e){ console.warn('placing', e); }
+    return r; }; }
+
+/* ---- words for a touch screen: tap, not click; Undo, not Ctrl+Z */
+const MP_TOUCH_WORDS = [["Click a guest's name, then click a seat. You can also drag names onto seats.", "Tap a name in Guest list, then tap a seat."],
+  ['Click any seat below or on the floor plan. If the seat is taken, the two guests swap.', 'Tap a seat. If it is taken, the two guests swap.'],
+  ['. Click a chair.', '. Tap a chair.'], ['Click a chair to assign a guest to it.', 'Tap a chair to seat a guest.'], ['Events portal · this browser', 'Events portal · this device']];
+function mpTouchWords(root){ if(!touchMQ.matches || !root) return; const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n;
+  while(n = w.nextNode()){ let s = n.nodeValue, c = s; for(const [a, b] of MP_TOUCH_WORDS) if(c.includes(a)) c = c.split(a).join(b); if(c !== s) n.nodeValue = c; } }
+for(const n of ['renderGuests', 'renderGuestList', 'renderBoard', 'renderInspector', 'renderPortal']) if(typeof window[n] === 'function'){ const f = window[n]; window[n] = function(){ const r = f.apply(this, arguments); mpTouchWords(n === 'renderInspector' ? $('#inspector') : n === 'renderPortal' ? $('#view-events') : $('#view-guests')); return r; }; }
+{ const _rpW = renderPlan; renderPlan = function(){ const r = _rpW.apply(this, arguments); if(typeof picked !== 'undefined' && picked) mpTouchWords($('#plan-pick')); return r; }; }
+{ const _toMp = toast; toast = function(){ const r = _toMp.apply(this, arguments); if(touchMQ.matches) setTimeout(() => { const t = $('#toast'); if(!t) return; const es = lang91() === 'es', wk = document.createTreeWalker(t, NodeFilter.SHOW_TEXT); let n;
+    while(n = wk.nextNode()) if(/Ctrl\s?\+?\s?[ZDK]\b/.test(n.nodeValue)) n.nodeValue = n.nodeValue.replace(/[^.]*Ctrl\s?\+?\s?K[^.]*\.?/g, '').replace(/Ctrl\s?\+?\s?Z to undo/g, 'Tap Undo to bring it back').replace(/Ctrl\s?\+?\s?Z para deshacer/g, 'Toca Deshacer para recuperarlo').replace(/Ctrl\s?\+?\s?Z/g, es ? 'Deshacer' : 'Undo').replace(/Ctrl\s?\+?\s?D\b/g, '').trim(); }, 60); return r; }; }
+/* the title follows a change of language made anywhere (the sign-in card, the account menu) */
+if(typeof tsSetLang === 'function'){ const _slMp = tsSetLang; tsSetLang = function(){ const r = _slMp.apply(this, arguments); setTimeout(() => { mpMeta(); mpNav(); }, 60); return r; }; }
+
+/* ---- the 3D room on a phone */
+function mpVisionSetup(){ const v = $('#view-vision'), c = v && v.querySelector('.v-controls'); if(!c) return;
+  if(!c.parentElement.classList.contains('mp-vset-wrap')){ const w = document.createElement('div'); w.className = 'mp-vset-wrap'; c.parentElement.insertBefore(w, c); w.insertAdjacentHTML('afterbegin', `<div class="mp-vset-head"><b>${esc('Room settings')}</b><button type="button" class="btn sm" data-mpvset="close">${esc('Done')}</button></div>`); w.appendChild(c); }
+  if(!$('#mp-vfab')) v.insertAdjacentHTML('beforeend', `<button type="button" class="mp-fab mp-vfab" id="mp-vfab" aria-label="${esc('Room settings')}" aria-haspopup="dialog">${MP_ICO.sliders}</button>`); }
+document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('#mp-vfab,[data-mpvset]'); if(!t) return; const v = $('#view-vision'); v.classList.toggle('mp-vset', t.id === 'mp-vfab' ? !v.classList.contains('mp-vset') : false); });
+
+/* ---- the guest bar, shorter on a phone */
+const _gbMp = tsGuestBar; tsGuestBar = function(){ const r = _gbMp.apply(this, arguments); const b = $('#ts-guest-bar');
+  if(b && !b.querySelector('.mp-guest-short')){ b.insertAdjacentHTML('afterbegin', `<span class="mp-guest-short"><b>${esc('Guest')}</b> · ${esc('saved on this phone')}</span>`); b.insertAdjacentHTML('beforeend', `<button type="button" class="mp-strip-x" aria-label="${esc('Hide for now')}">${MP_ICO.close}</button>`); }
+  const was = document.documentElement.classList.contains('mp-guest'); document.documentElement.classList.toggle('mp-guest', mpGuest()); if(was !== mpGuest()) mpNav(); return r; };
+try { if(sessionStorage.getItem('mp-strip-off') === '1') document.documentElement.classList.add('mp-strip-off'); } catch(e){}
+document.addEventListener('click', e => { if(!e.target.closest || !e.target.closest('.mp-strip-x')) return; document.documentElement.classList.add('mp-strip-off'); try { sessionStorage.setItem('mp-strip-off', '1'); } catch(x){} });
+
+/* ---- first run: three questions before the first look around (replaces the welcome's first showing; the welcome stays in Help) */
+let FR = null;
+function frOpen(opts){ opts = opts || {}; const cur = mpSetup() || {}; FR = {step:0, a:{role:cur.role, exp:cur.exp, goal:cur.goal}, company:opts.company || '', again:!!opts.again}; frDraw(); }
+function frSteps(){ const role = FR.a.role;
+  return [{k:'role', h:FR.company ? 'Welcome to Tablescape' : 'What brings you to Tablescape?', p:FR.company ? 'Three quick questions, so the app shows what you need first.' : 'Three quick questions, so the app shows what you need first. You can change them any time.', opts:Object.entries(MP_ROLES).map(([k, r]) => [k, r.label, r.sub])},
+    {k:'exp', h:'Have you used Tablescape before?', p:'New here? We’ll point things out the first time.', opts:[['new', 'I’m new to Tablescape', 'Show me around as I go'], ['used', 'I’ve used it before', 'Skip the tips and take me in']]},
+    {k:'goal', h:'What would you like to do first?', p:'We’ll open it for you. Everything else is one tap away.', opts:MP_GOALS.filter(g => !(role === 'couple' && g[0] === 'proposal'))}]; }
+function frDraw(){ const o0 = $('#fr1'); if(o0) o0.remove(); const steps = frSteps(), st = steps[FR.step], co = FR.company;
+  document.body.insertAdjacentHTML('beforeend', `<div class="wl57 fr1" id="fr1" role="dialog" aria-modal="true" aria-labelledby="fr1-h"><div class="wl57-card fr1-card">
+    <div class="fr1-top"><span class="eyebrow">${co ? esc(co) + ' · ' : ''}<span>${esc('Question')}</span> ${FR.step + 1} <span>${esc('of')}</span> 3</span><button type="button" class="fr1-skip" data-fr="skip">${esc(FR.again ? 'Close' : 'Skip')}</button></div>
+    <div class="wl57-hero fr1-hero"><h1 id="fr1-h">${esc(st.h)}</h1><p>${esc(st.p)}</p></div>
+    ${FR.step === 0 && typeof tsLangChipsHTML === 'function' ? `<div class="wl57-lang">${tsLangChipsHTML()}</div>` : ''}
+    <div class="wl57-grid fr1-grid" role="radiogroup" aria-labelledby="fr1-h">${st.opts.map(([k, b, s]) => `<button type="button" class="wl57-opt${FR.a[st.k] === k ? ' fr1-on' : ''}" role="radio" aria-checked="${FR.a[st.k] === k}" data-frpick="${k}"><b>${esc(b)}</b><span>${esc(s)}</span></button>`).join('')}</div>
+    <div class="fr1-foot">${FR.step ? `<button type="button" class="btn" data-fr="back">${esc('Back')}</button>` : '<span></span>'}<span class="fr1-steps" aria-hidden="true">${steps.map((x, i) => `<i class="${i <= FR.step ? 'on' : ''}"></i>`).join('')}</span></div></div></div>`);
+  const o = $('#fr1'); if(typeof apply91 === 'function') apply91(o); setTimeout(() => { const f = o.querySelector('#fr1-h'); if(f){ f.tabIndex = -1; f.focus({preventScroll:true}); } }, 40); }   /* the question has focus, so no answer looks picked */
+function frClose(){ const o = $('#fr1'); if(o) o.remove(); FR = null; }
+function frFinish(skipped){ const a = FR ? FR.a : {}, again = FR && FR.again; frClose();
+  if(skipped){ if(!again){ mpSetupSave(Object.assign({v:1, skipped:true, at:new Date().toISOString()}, mpSetup() || {})); if(mpPhone()) switchView('floor'); } mpNav(); return; }   /* a skipper starts on the floor plan, where the tray says what to do */
+  mpSetupSave({v:1, role:a.role, exp:a.exp, goal:a.goal, at:new Date().toISOString()}); mpNav();
+  if(a.exp === 'used'){ try { ls.set('tablescape-touch-hint', '1'); } catch(e){} }
+  const role = mpRole({role:a.role}), guest = mpGuest();
+  const sample = () => { pushUndo(); state = samplePlan(); sel = null; picked = null; activeLook = state.looks[0].id; if(typeof V !== 'undefined' && V) V.placed = false; save(); viewInit = false; renderAll(); switchView('vision'); };
+  if(again){ toast(L('Saved. Your pages are set for this.') + ' ' + L(role ? role.label : '')); return; }
+  if(a.goal === 'room'){ switchView('floor'); if(a.exp === 'new' && typeof gsOpen === 'function'){ gsOpen(); return; } }   /* the setup opens over the floor plan, so closing it lands there */
+  else if(a.goal === 'design') switchView('style');
+  else if(a.goal === 'guests') switchView('guests');
+  else if(a.goal === 'proposal'){ if(guest){ sample(); toast(L('Here is a finished event to explore. Proposals need an account; create one when you’re ready.')); return; } switchView('client'); }
+  else sample();
+  /* a new person gets one plain hint for the page on a phone (the page tours were written for a mouse and a side panel), the page's tour on a computer */
+  const MP_HINT = {floor:'Tap a table below to add it. Drag tables to move them, and pinch to zoom.', style:'Pick a look, then change the linens, chairs and flowers. Preview shows the table.',
+    guests:'Add guests at the top. To seat someone, tap their name, then tap a seat.', vision:'Drag to look around and pinch to zoom. Room settings are at the top right.',
+    client:'The proposal, agreement and payments live here, on one link for your client.'};
+  if(a.exp === 'new' && a.goal !== 'room' && mpPhone() && MP_HINT[currentView]) setTimeout(() => toast(L(MP_HINT[currentView])), 400);
+  else if(a.exp === 'new' && a.goal !== 'room' && typeof TOURS57 !== 'undefined' && TOURS57[currentView] && typeof startTour57 === 'function') setTimeout(() => startTour57(currentView), 500);
+  else toast(L(mpPhone() ? 'You’re all set. Change your answers any time in More.' : 'You’re all set. Change your answers any time in Help.')); }
+document.addEventListener('click', e => { if(!FR) return; const p = e.target.closest && e.target.closest('[data-frpick],[data-fr]'); if(!p) return; const steps = frSteps(), st = steps[FR.step];
+  if(p.dataset.frpick){ FR.a[st.k] = p.dataset.frpick; if(st.k === 'role' && FR.a.goal === 'proposal' && FR.a.role === 'couple') FR.a.goal = undefined; if(FR.step < steps.length - 1){ FR.step++; frDraw(); } else frFinish(false); return; }
+  if(p.dataset.fr === 'back' && FR.step){ FR.step--; frDraw(); return; }
+  if(p.dataset.fr === 'skip') frFinish(true); });
+document.addEventListener('keydown', e => { if(!FR || !$('#fr1')) return; if(e.key === 'Escape'){ e.stopImmediatePropagation(); frFinish(true); } }, true);
+/* the welcome's first showing becomes the questions, for a team member on any screen; once answered (or skipped), the welcome is as before */
+const _openWelcomeMp = openWelcome57; window._openWelcomeMp = _openWelcomeMp;
+openWelcome57 = function(opts){ const a = document.getElementById('ts-auth'), o = opts && typeof opts === 'object' ? opts : {};
+  if(typeof vlShared === 'function' && vlShared()) return;   /* valet pages: as the inner wrapper says */
+  if(!o.company && ((MP_SHOW && !mpShowDone) || (typeof TOUR57 !== 'undefined' && TOUR57))) return;   /* never over the showcase or a tour */
+  const waiting = (a && !a.hidden) || (window.TS_SUPABASE && typeof TSB !== 'undefined' && !TSB.anon && !TSB.cid && !TSB.guest);
+  if(!clientMode && !waiting && !mpSetup()){ frOpen({company:o.company}); return; }
+  return _openWelcomeMp.apply(this, arguments); };
+/* The Grand showcase (tablescape.vip's "See the showcase" buttons open #showcase) goes straight into the furnished room on a first visit. It used
+   to wait behind the welcome card in an empty room, and on a phone browser the tour never started. Nothing else opens over a tour. */
+const MP_SHOW = location.hash === '#showcase'; let mpShowDone = false;
+{ const _etMp = endTour57; endTour57 = function(){ const was = typeof TOUR57 !== 'undefined' && TOUR57 && TOUR57.key; const r = _etMp.apply(this, arguments); if(was === 'grand') mpShowDone = true; return r; }; }
+{ const _stMp = startTour57; startTour57 = function(key){ if(key === 'grand' && typeof TOUR57 !== 'undefined' && TOUR57 && TOUR57.key === 'grand') return; frClose(); mpSheetClose(true); return _stMp.apply(this, arguments); }; }
+if(MP_SHOW){ let n = 0; const go = () => { if((typeof TOUR57 !== 'undefined' && TOUR57) || ++n > 80) return;
+    if(!window.TS_SUPABASE || (typeof TSB !== 'undefined' && (TSB.cid || TSB.anon))) return;   /* signed in, or the claude.ai copy: initCosts starts it once the event is set aside */
+    const ready = !document.documentElement.classList.contains('ts-signin') && typeof TSB !== 'undefined' && TSB.guest;
+    if(!ready){ setTimeout(go, 250); return; } closeWelcome57(); startTour57('grand'); };
+  setTimeout(go, 200); }
+/* Help (computer) and Ctrl+K: change the answers */
+{ const _hm = helpMenu57; helpMenu57 = function(){ return _hm.apply(this, arguments) + (clientMode ? '' : `<button data-help57="answers">${esc('Your answers')}<small>${esc('Who you are and what you do first')}</small></button>`); };
+  document.addEventListener('click', e => { const h = e.target.closest && e.target.closest('[data-help57="answers"]'); if(!h) return; const p = $('#help57-pop'); if(p) p.hidden = true; frOpen({again:true}); });
+  if(typeof QUICK !== 'undefined') QUICK.push(['Your answers', 'events', () => setTimeout(() => frOpen({again:true}), 50)]);
+  if(typeof quickGo === 'function'){ const _qg = quickGo; quickGo = function(i){ const q = QUICK[i]; if(q && q[0] === 'Your answers'){ quickClose(); q[2](); return; } return _qg.apply(this, arguments); }; } }
+(function(){ const st = document.createElement('style'); st.textContent = `
+.fr1-card{max-width:560px}
+.fr1-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 14px 0 24px}
+.fr1-skip{min-height:44px;padding:0 14px;border:0;border-radius:999px;background:none;color:var(--muted);font:600 13.5px/1 var(--body);cursor:pointer}
+.fr1-hero{padding-top:6px!important}
+.fr1-hero h1{font-size:clamp(26px,7vw,34px)!important}
+.fr1-grid .wl57-opt{grid-template-columns:minmax(0,1fr)!important;min-height:64px}
+.fr1-grid .wl57-opt.fr1-on{border-color:var(--accent)}
+@media (min-width:601px){.fr1-grid{grid-template-columns:minmax(0,1fr)!important}}
+.fr1-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 20px 18px}
+.fr1-steps{display:flex;gap:6px}.fr1-steps i{width:18px;height:3px;border-radius:2px;background:var(--line-strong)}.fr1-steps i.on{background:var(--accent)}
+`; document.head.appendChild(st); })();
+
+/* ---- Spanish for everything above (English + Español follows the same dictionary) */
+{ const MP_ES = {'3D':'3D', 'With an account':'Con una cuenta', 'Events portal · this device':'Portal de eventos · este dispositivo', 'Guest list':'Lista de invitados', 'Seating':'Asientos', 'Design':'Diseño', 'Preview':'Vista previa', 'Hide for now':'Ocultar por ahora', 'Tap a name in Guest list, then tap a seat.':'Toca un nombre en Lista de invitados y luego un asiento.', 'Tap a seat. If it is taken, the two guests swap.':'Toca un asiento. Si está ocupado, los dos invitados cambian de lugar.', '. Tap a chair.':'. Toca una silla.', 'Tap a chair to seat a guest.':'Toca una silla para sentar a un invitado.', 'Events':'Eventos', 'Floor plan':'Plano', '3D room':'Sala 3D', 'Tables':'Mesas', 'Guests':'Invitados', 'Menu':'Menú', 'Music':'Música', 'Invitations':'Invitaciones', 'Proposal':'Propuesta',
+  'Inventory':'Inventario', 'Budget':'Presupuesto', 'Planning':'Planificación', 'Order sheet':'Hoja de pedido', 'Backdrops':'Fondos', 'Packages':'Paquetes', 'More':'Más', 'Pages':'Páginas',
+  'Your pages':'Tus páginas', 'Other pages':'Otras páginas', 'Tools':'Herramientas', 'Search':'Buscar', 'Find any page or tool':'Encuentra cualquier página o herramienta', 'Day-of mode':'Modo del día del evento',
+  'Check-in and tasks for your staff':'Registro y tareas para tu personal', 'Easy mode':'Modo fácil', 'Big buttons, one step at a time':'Botones grandes, un paso a la vez', 'Help and tours':'Ayuda y recorridos',
+  'A short tour of the app or this page':'Un recorrido corto por la app o por esta página', 'This event':'Este evento', 'Date and venue':'Fecha y lugar', 'More options':'Más opciones', 'Settings':'Ajustes',
+  'Keep this event and use everything':'Guarda este evento y usa todo', 'Your account':'Tu cuenta', 'Sign-in, team and workspace':'Inicio de sesión, equipo y espacio de trabajo', 'Your answers':'Tus respuestas',
+  'Who you are and what you do first':'Quién eres y qué haces primero', 'Add date and venue':'Agrega la fecha y el lugar', 'Event date and venue':'Fecha y lugar del evento', 'Close':'Cerrar', 'Done':'Listo',
+  'Details':'Detalles', 'Rotate':'Girar', 'Duplicate':'Duplicar', 'Remove':'Quitar', 'Chair':'Silla', 'Ceremony seating':'Asientos de la ceremonia', 'Selected item':'Elemento seleccionado', 'Room':'Salón',
+  'Ceremony':'Ceremonia', 'Chairs':'Sillas', 'See all':'Ver todo', 'Show less':'Ver menos', 'Add to the floor plan':'Agregar al plano', 'Space':'Espacio', 'Reception':'Recepción', 'Fit room':'Ajustar el salón',
+  'Room and view':'Salón y vista', 'Room and checks':'Salón y revisiones', 'Size, look, venue and layout checks':'Tamaño, estilo, lugar y revisión del plano', 'Snap to grid':'Ajustar a la cuadrícula', 'Measure':'Medir',
+  'Guest names':'Nombres de invitados', 'Floor plan PDF':'PDF del plano', 'With a table-by-table setup sheet':'Con una hoja de montaje mesa por mesa', 'Floor plan image':'Imagen del plano', 'Room settings':'Ajustes de la sala',
+  'Guest':'Invitado', 'saved on this phone':'se guarda aquí', 'Tour of the whole app':'Recorrido por toda la app', 'About 2 minutes, with things to try':'Unos 2 minutos, con cosas para probar',
+  'Tour of this page':'Recorrido por esta página', 'Welcome screen':'Pantalla de bienvenida', 'Set up an event, a theme or the sample':'Prepara un evento, un tema o el ejemplo',
+  'Question':'Pregunta', 'of':'de', 'Skip':'Omitir', 'Back':'Atrás', 'What brings you to Tablescape?':'¿Qué te trae a Tablescape?', 'Welcome to Tablescape':'Bienvenido a Tablescape',
+  'Three quick questions, so the app shows what you need first.':'Tres preguntas rápidas, para que la app te muestre primero lo que necesitas.',
+  'Three quick questions, so the app shows what you need first. You can change them any time.':'Tres preguntas rápidas, para que la app te muestre primero lo que necesitas. Puedes cambiarlas cuando quieras.',
+  'Venue owner or manager':'Dueño o gerente de un salón', 'Rooms, floor plans, proposals and bookings':'Salones, planos, propuestas y reservas', 'Event planner':'Organizador de eventos',
+  'Clients, designs, guests and the day itself':'Clientes, diseños, invitados y el día del evento', 'Decor or rental company':'Empresa de decoración o renta', 'Linens, tables, backdrops and stock':'Mantelería, mesas, fondos e inventario',
+  'Planning my own event':'Organizo mi propio evento', 'A wedding, quinceañera or party of your own':'Tu boda, quinceañera o fiesta', 'Have you used Tablescape before?':'¿Ya has usado Tablescape?',
+  'New here? We’ll point things out the first time.':'¿Eres nuevo? Te mostraremos las cosas la primera vez.', 'I’m new to Tablescape':'Soy nuevo en Tablescape', 'Show me around as I go':'Muéstrame mientras avanzo',
+  'I’ve used it before':'Ya lo he usado', 'Skip the tips and take me in':'Sin consejos, llévame directo', 'What would you like to do first?':'¿Qué te gustaría hacer primero?',
+  'We’ll open it for you. Everything else is one tap away.':'Lo abrimos por ti. Todo lo demás está a un toque.', 'Lay out the room':'Acomodar el salón', 'Tables, seats and the dance floor, to scale':'Mesas, asientos y pista de baile, a escala',
+  'Design the tables in 3D':'Diseñar las mesas en 3D', 'Linens, chairs, flowers and the whole room':'Mantelería, sillas, flores y todo el salón', 'Add guests and seating':'Agregar invitados y asientos',
+  'Your list, meals and who sits where':'Tu lista, los platillos y quién se sienta dónde', 'Send a client a proposal':'Enviar una propuesta a un cliente', 'Design, price and agreement in one link':'Diseño, precio y contrato en un solo enlace',
+  'Look around first':'Explorar primero', 'A finished wedding to explore':'Una boda terminada para explorar', 'Saved. Your pages are set for this.':'Guardado. Tus páginas quedaron listas para esto.',
+  'Here is a finished event to explore. Proposals need an account; create one when you’re ready.':'Aquí tienes un evento terminado para explorar. Las propuestas necesitan una cuenta; créala cuando quieras.',
+  'You’re all set. Change your answers any time in More.':'Todo listo. Cambia tus respuestas cuando quieras en Más.', 'You’re all set. Change your answers any time in Help.':'Todo listo. Cambia tus respuestas cuando quieras en Ayuda.',
+  'Event name':'Nombre del evento', 'Untitled event':'Evento sin nombre', 'Change the name, date and venue':'Cambia el nombre, la fecha y el lugar', 'Date':'Fecha', 'Venue':'Lugar', 'Venue name':'Nombre del lugar', 'Tap a table below to add it. Drag tables to move them, and pinch to zoom.':'Toca una mesa abajo para agregarla. Arrastra las mesas para moverlas y pellizca para acercar.', 'Pick a look, then change the linens, chairs and flowers. Preview shows the table.':'Elige un estilo y cambia la mantelería, las sillas y las flores. Vista previa muestra la mesa.', 'Add guests at the top. To seat someone, tap their name, then tap a seat.':'Agrega invitados arriba. Para sentar a alguien, toca su nombre y luego un asiento.', 'Drag to look around and pinch to zoom. Room settings are at the top right.':'Arrastra para mirar alrededor y pellizca para acercar. Los ajustes de la sala están arriba a la derecha.', 'The proposal, agreement and payments live here, on one link for your client.':'La propuesta, el contrato y los pagos están aquí, en un solo enlace para tu cliente.', 'Redo':'Rehacer', 'Bring back what Undo took away':'Recupera lo que quitó Deshacer', 'Venue studio':'Estudio del lugar', 'The Grand in 3D, room by room':'The Grand en 3D, salón por salón', 'The link may be old. Ask the venue for its link.':'El enlace puede ser viejo. Pida el enlace al lugar.', 'This venue’s inquiry form isn’t set up yet, so nothing can be sent from this page. Please contact the venue directly.':'El formulario de este lugar todavía no está listo, así que no se puede enviar nada desde esta página. Por favor, comuníquese directamente con el lugar.', 'Card payments aren’t open yet. To start a plan or take the founding offer, write to':'Los pagos con tarjeta aún no están abiertos. Para empezar un plan o tomar la oferta de fundador, escribe a', 'Create an account':'Crear una cuenta', 'Sign in':'Iniciar sesión'}; for(const [k, v] of Object.entries(MP_ES)) if(!Object.prototype.hasOwnProperty.call(ES91, k)) ES91[k] = v; }
+
+/* ---- the store app's pages don't pinch-zoom as a whole; the plan, the 3D room and the previews keep their own pinch */
+function mpNoZoom(){ const d = document.documentElement; if(!(d.classList.contains('native-app') || d.dataset.native)) return; d.classList.add('mp-app');
+  const m = document.querySelector('meta[name=viewport]'); if(m && !/user-scalable=no/.test(m.content)) m.content = m.content.replace(/\s*,?\s*maximum-scale=[^,]*/g, '') + ', maximum-scale=1, user-scalable=no'; }
+mpNoZoom(); setTimeout(mpNoZoom, 1500);   /* this script runs after the page is parsed; the second call catches a late native.js */
+
+/* ---- start */
+mpClass(); mpMeta(); mpNav(); mpFloorSetup(); mpVisionSetup(); mpFloorLayout(); mpTabs();
+window.tsPhone = {setup:mpSetup, open:frOpen, more:mpMore, bar:mpBar, layout:mpFloorLayout};
+})();
+/* mp:end */
 /* Treasure is an event view inside the existing workspace. */
 (() => {
   const link = document.getElementById('treasure-suite-link');

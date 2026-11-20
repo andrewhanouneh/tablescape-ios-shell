@@ -171,6 +171,7 @@
     if (!document.body) return;
     if (!banner) {
       banner = document.createElement('div');
+      banner.id = 'store-offline';   // the web app lifts it above its bottom bar on phones
       banner.setAttribute('role', 'status');
       banner.setAttribute('aria-live', 'polite');
       banner.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483647;' +

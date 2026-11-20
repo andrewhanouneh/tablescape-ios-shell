@@ -1,11 +1,11 @@
 {
  "app": "com.tablescapestudio.app",
- "version": "202611192105-061069e5",
- "seq": 1795122333992,
- "built": "2026-11-19T21:05:33.992Z",
+ "version": "202611200450-a8464776",
+ "seq": 1795150249326,
+ "built": "2026-11-20T04:50:49.326Z",
  "source": {
-  "branch": "release/app-1.0.2",
-  "commit": "de61fdac49979d786e962989169017a1f1c550a6",
+  "branch": "release/app-1.0.3",
+  "commit": "f812809b61fd2d9a2d36e7a62b3fcd6a8f36e278",
   "dirty": false
  },
  "files": [
@@ -281,8 +281,8 @@
   },
   {
    "path": "index.html",
-   "sha256": "8eb614aed7bd6776431c68dffa223009511ebd2501d28ccf8f83b334d32bea16",
-   "size": 162730
+   "sha256": "0c5959898d1775717e5cb291943d59213f35f3ee3e3abc8589a413af67ba8482",
+   "size": 163094
   },
   {
    "path": "live-update.js",
@@ -665,9 +665,9 @@
    "size": 40998
   },
   {
-   "path": "vendor/tablescape-9a29bf8f6e89ec33.js",
-   "sha256": "190e9c23572938e87ad8e968f84df17ca24ce8f06473e98402372f66eb76d633",
-   "size": 5011757
+   "path": "vendor/tablescape-59e85b9f19c8c7fb.js",
+   "sha256": "6a7b219a10965d6917e01a5c0eedda3ae15cc497aa24e38d199a7137ddebebf8",
+   "size": 5101390
   },
   {
    "path": "vendor/three-0.180.0/build/three.core.min.js",
