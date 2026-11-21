@@ -36434,6 +36434,10 @@ const tsGuestChosen = () => { try { return sessionStorage.getItem(TS_GUEST) === 
    still open their card */
 function tsSignedOut(mode){
   const invite = TSB.invite && TSB.invite.status === 'open';
+  /* an email link that didn't work (used or expired) put its own card up before the start-up: keep it, never hide it behind the guest studio.
+     tsAuthUI keeps the held card (TS_AU.hold) and adds "Keep exploring as a guest" to it, so a first visit is still one tap from the studio */
+  const card = document.getElementById('ts-auth');
+  if(typeof TS_AU !== 'undefined' && TS_AU.hold && card && card.querySelector('[data-mode="link-expired"]')){ card.hidden = false; tsAuthUI(mode); TS_AU.hold = false; return; }
   if(!invite && mode !== 'signup' && tsGuestOK() && (mode === 'welcome' || tsGuestChosen())) tsGuestOn();
   else tsAuthUI(mode);
 }
